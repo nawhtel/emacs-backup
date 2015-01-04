@@ -21,14 +21,19 @@
 (require 'auto-complete)
 (ac-config-default)
 (setq ac-auto-show-menu t)
+(setq ac-disable-faces nil)
 
 ;;Auto-Complete-C-Headers
 (defun my:ac-c-headers-init ()
   (require 'auto-complete-c-headers)
   (add-to-list 'ac-sources 'ac-source-c-headers)
-  (setq achead:include-directories (list "." "/usr/include/c++/4.9.2" "usr/include" "/usr/include/qt")))
-(add-hook 'c++-mode-hook 'my:ac-c-headers-init)
+  (setq achead:include-directories (list "." "/usr/include")))
 (add-hook 'c-mode-hook 'my:ac-c-headers-init)
+(defun my:ac-c++-headers-init ()
+  (require 'auto-complete-c-headers)
+  (add-to-list 'ac-sources 'ac-source-c-headers)
+  (setq achead:include-directories (list "." "/usr/include/c++/4.9.2" "usr/include" "/usr/include/qt")))
+(add-hook 'c++-mode-hook 'my:ac-c++-headers-init)
 
 ;;Auto-Complete-Clang-Async
 (require 'auto-complete-clang-async)
@@ -42,6 +47,10 @@
   (add-hook 'auto-complete-mode-hook 'ac-common-setup)
   (global-auto-complete-mode t))
 (my-ac-config)
+
+;;Electric-Pair Mode
+(electric-pair-mode 1)
+(setq electric-pair-pairs '((?\< . ?\>)))
 
 ;;Racket Mode
 (add-hook 'racket-mode-hook
