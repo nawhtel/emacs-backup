@@ -10,13 +10,6 @@
              '("melpa" . "http://melpa.org/packages/") t)
 (package-initialize)
 
-;;Haskell Mode
-(add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
-(add-hook 'haskell-mode-hook 'interactive-haskell-mode)
-(add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
-;;(add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
-;;(add-hook 'haskell-mode-hook 'turn-on-haskell-simple-indent)
-
 ;;Auto-Complete Mode
 (require 'auto-complete)
 (ac-config-default)
@@ -51,6 +44,13 @@
 ;;Electric-Pair Mode
 (electric-pair-mode 1)
 (setq electric-pair-pairs '((?\< . ?\>)))
+
+;;Haskell Mode
+(add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
+(add-hook 'haskell-mode-hook 'interactive-haskell-mode)
+(add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
+;;(add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
+;;(add-hook 'haskell-mode-hook 'turn-on-haskell-simple-indent)
 
 ;;Racket Mode
 (add-hook 'racket-mode-hook
