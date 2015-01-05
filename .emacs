@@ -45,7 +45,6 @@
 
 ;;Electric-Pair Mode
 (electric-pair-mode 1)
-(setq electric-pair-pairs '((?\< . ?\>)))
 
 ;;Haskell Mode
 (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
