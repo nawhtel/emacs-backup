@@ -13,7 +13,7 @@
 ;;Auto-Complete Mode
 (require 'auto-complete)
 (ac-config-default)
-(setq ac-delay 0.25)
+(setq ac-delay 0.07)
 (setq ac-auto-show-menu t)
 (setq ac-disable-faces nil)
 (setq ac-ignore-case t)
@@ -43,6 +43,16 @@
   (add-hook 'auto-complete-mode-hook 'ac-common-setup)
   (global-auto-complete-mode t))
 (my-ac-config)
+
+;;Flycheck
+(add-hook 'after-init-hook #'global-flycheck-mode)
+(add-hook 'c++-mode-hook
+	  (lambda () (setq flycheck-clang-args
+			   (append '("-std=c++14") flycheck-clang-args))))
+
+;;YASnippet
+(require 'yasnippet)
+(yas-global-mode 1)
 
 ;;Electric-Pair Mode
 (electric-pair-mode 1)
