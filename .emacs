@@ -25,7 +25,7 @@
 (defun my:ac-c++-headers-init ()
   (require 'auto-complete-c-headers)
   (add-to-list 'ac-sources 'ac-source-c-headers)
-  (setq achead:include-directories (list "." "/usr/include/c++/4.9.2" "usr/include" "/usr/include/qt")))
+  (setq achead:include-directories (list "." "/usr/include/c++/4.9.2" "/usr/include" "/usr/include/qt")))
 (add-hook 'c++-mode-hook 'my:ac-c++-headers-init)
 
 ;;Auto-Complete-Clang-Async
