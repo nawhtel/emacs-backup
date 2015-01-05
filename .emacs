@@ -15,7 +15,7 @@
 (ac-config-default)
 (setq ac-auto-show-menu t)
 (setq ac-disable-faces nil)
-(setq ac-ignore-case 'smart)
+(setq ac-ignore-case t)
 (setq ac-use-fuzzy t)
 
 ;;Auto-Complete-C-Headers
