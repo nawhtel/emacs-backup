@@ -13,6 +13,7 @@
 ;;Auto-Complete Mode
 (require 'auto-complete)
 (ac-config-default)
+(setq ac-delay 0.25)
 (setq ac-auto-show-menu t)
 (setq ac-disable-faces nil)
 (setq ac-ignore-case t)
