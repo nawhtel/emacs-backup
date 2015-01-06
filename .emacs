@@ -14,13 +14,15 @@
 (require 'company)
 (add-hook 'after-init-hook 'global-company-mode)
 (setq company-idle-delay 0.09)
+(setq company-minimum-prefix-length 2)
 
 ;;Company C Headers
 (add-to-list 'company-backends 'company-c-headers)
 (add-hook 'c++-mode-hook
-	  (lambda () (setq company-c-headers-path-system
-			   (list "/usr/include/c++/4.9.2/"
-				 "/usr/include/" "/usr/local/include/"))))
+	  (lambda ()
+	    (setq company-c-headers-path-system
+		  (list "/usr/include/c++/4.9.2/"
+			"/usr/include/" "/usr/local/include/"))))
 
 ;;Company Clang
 (add-hook 'c++-mode-hook
