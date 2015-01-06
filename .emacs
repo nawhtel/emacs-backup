@@ -10,59 +10,38 @@
              '("melpa" . "http://melpa.org/packages/") t)
 (package-initialize)
 
-;;Auto-Complete Mode
-(require 'auto-complete)
-(ac-config-default)
-(setq ac-delay 0.07)
-(setq ac-auto-show-menu t)
-(setq ac-disable-faces nil)
-(setq ac-ignore-case t)
-(setq ac-use-fuzzy t)
+;;Company Mode
+(require 'company)
+(add-hook 'after-init-hook 'global-company-mode)
+(setq company-idle-delay 0.09)
 
-;;Auto-Complete-C-Headers
-(defun my:ac-c-headers-init ()
-  (require 'auto-complete-c-headers)
-  (add-to-list 'ac-sources 'ac-source-c-headers)
-  (setq achead:include-directories (list "." "/usr/include")))
-(add-hook 'c-mode-hook 'my:ac-c-headers-init)
-(defun my:ac-c++-headers-init ()
-  (require 'auto-complete-c-headers)
-  (add-to-list 'ac-sources 'ac-source-c-headers)
-  (setq achead:include-directories (list "." "/usr/include/c++/4.9.2" "/usr/include" "/usr/include/qt")))
-(add-hook 'c++-mode-hook 'my:ac-c++-headers-init)
+;;Company C Headers
+(add-to-list 'company-backends 'company-c-headers)
+(setq company-c-headers-path-system
+      (list "/usr/include/c++/4.9.2" "/usr/include/"))
 
-;;Auto-Complete-Clang-Async
-(require 'auto-complete-clang-async)
-(defun ac-cc-mode-setup ()
-  (setq ac-clang-complete-executable "~/.emacs.d/clang-complete")
-  (setq ac-sources '(ac-source-clang-async))
-  (setq ac-clang-cflags (append '("-std=c++14") ac-clang-cflags))
-  (ac-clang-launch-completion-process))
-(defun my-ac-config ()
-  (add-hook 'c-mode-common-hook 'ac-cc-mode-setup)
-  (add-hook 'auto-complete-mode-hook 'ac-common-setup)
-  (global-auto-complete-mode t))
-(my-ac-config)
-
-;;Flycheck
-(add-hook 'after-init-hook #'global-flycheck-mode)
-(add-hook 'c++-mode-hook
-	  (lambda () (setq flycheck-clang-args
-			   (append '("-std=c++14") flycheck-clang-args))))
-
-;;YASnippet
-(require 'yasnippet)
-(yas-global-mode 1)
+;;Company Clang
+(setq company-clang-arguments '("-std=c++14"))
 
 ;;Electric-Pair Mode
 (electric-pair-mode 1)
 
+;;Flycheck
+(add-hook 'after-init-hook #'global-flycheck-mode)
+(add-hook 'c++-mode-hook
+	  (lambda () (setq flycheck-clang-language-standard "c++14")))
+(add-hook 'c++-mode-hook
+	  (lambda () (setq flycheck-clang-standard-library "libstdc++")))
+
 ;;Haskell Mode
-(add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
+(add-hook 'haskell-mode-hook 'haskell-doc-mode)
 (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
-(add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
-;;(add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
-;;(add-hook 'haskell-mode-hook 'turn-on-haskell-simple-indent)
+(add-hook 'haskell-mode-hook 'haskell-indent-mode)
+
+;;Lua Mode
+(autoload 'lua-mode "lua-mode" "Lua editing mode." t)
+(add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
+(add-to-list 'interpreter-mode-alist '("lua" . lua-mode))
 
 ;;Racket Mode
 (add-hook 'racket-mode-hook
