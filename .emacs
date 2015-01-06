@@ -17,11 +17,14 @@
 
 ;;Company C Headers
 (add-to-list 'company-backends 'company-c-headers)
-(setq company-c-headers-path-system
-      (list "/usr/include/c++/4.9.2" "/usr/include/"))
+(add-hook 'c++-mode-hook
+	  (lambda () (setq company-c-headers-path-system
+			   (list "/usr/include/c++/4.9.2/"
+				 "/usr/include/" "/usr/local/include/"))))
 
 ;;Company Clang
-(setq company-clang-arguments '("-std=c++14"))
+(add-hook 'c++-mode-hook
+	  (lambda () (setq company-clang-arguments '("-std=c++14"))))
 
 ;;Electric-Pair Mode
 (electric-pair-mode 1)
@@ -46,7 +49,7 @@
 ;;Racket Mode
 (add-hook 'racket-mode-hook
           '(lambda ()
-             (define-key racket-mode-map (kbd "C-c r") 'racket-run)))
+	     (define-key racket-mode-map (kbd "C-c r") 'racket-run)))
 
 ;;QML Mode
 (autoload 'qml-mode "qml-mode" "Editing Qt Declarative." t)
