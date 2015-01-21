@@ -11,6 +11,5 @@ flycheck<br>
 haskell-mode<br>
 helm-mode<br>
 lua-mode<br>
-projectile<br>
 qml-mode<br>
 racket-mode<br>
