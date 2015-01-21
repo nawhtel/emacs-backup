@@ -47,17 +47,13 @@
 (add-hook 'haskell-mode-hook 'haskell-indent-mode)
 
 ;;Helm Mode
-(require 'helm-config)
-(global-set-key (kbd "M-x") 'helm-M-x)
 (helm-mode 1)
+(global-set-key (kbd "M-x") 'helm-M-x)
 
 ;;Lua Mode
 (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
 (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
 (add-to-list 'interpreter-mode-alist '("lua" . lua-mode))
-
-;;Projectile
-(projectile-global-mode)
 
 ;;Racket Mode
 (add-hook 'racket-mode-hook
