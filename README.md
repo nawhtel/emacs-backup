@@ -9,7 +9,7 @@ company<br>
 company-c-headers<br>
 flycheck<br>
 haskell-mode<br>
-helm-mode<br>
+helm<br>
 lua-mode<br>
 qml-mode<br>
 racket-mode<br>
