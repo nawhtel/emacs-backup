@@ -41,6 +41,13 @@
 (add-hook 'c++-mode-hook
 	  '(lambda () (setq flycheck-clang-standard-library "libstdc++")))
 
+;;GLSL Mode
+(autoload 'glsl-mode "glsl-mode" "GL Shading Language editing mode" t)
+(add-to-list 'auto-mode-alist '("\\.glsl\\'" . glsl-mode))
+(add-to-list 'auto-mode-alist '("\\.vert\\'" . glsl-mode))
+(add-to-list 'auto-mode-alist '("\\.frag\\'" . glsl-mode))
+(add-to-list 'auto-mode-alist '("\\.geom\\'" . glsl-mode))
+
 ;;Haskell Mode
 (add-hook 'haskell-mode-hook 'haskell-doc-mode)
 (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
@@ -49,6 +56,7 @@
 ;;Helm
 (helm-mode 1)
 (global-set-key (kbd "M-x") 'helm-M-x)
+(global-set-key (kbd "C-x C-d") 'helm-browse-project)
 
 ;;Lua Mode
 (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
