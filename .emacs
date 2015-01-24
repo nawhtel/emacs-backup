@@ -56,7 +56,6 @@
 ;;Helm
 (helm-mode 1)
 (global-set-key (kbd "M-x") 'helm-M-x)
-(global-set-key (kbd "C-x C-d") 'helm-browse-project)
 
 ;;Lua Mode
 (autoload 'lua-mode "lua-mode" "Lua editing mode." t)

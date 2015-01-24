@@ -11,8 +11,6 @@ flycheck<br>
 glsl-mode<br>
 haskell-mode<br>
 helm<br>
-helm-ls-git<br>
-helm-ls-hg<br>
 lua-mode<br>
 qml-mode<br>
 racket-mode<br>
