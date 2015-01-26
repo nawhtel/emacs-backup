@@ -1,16 +1,16 @@
 Emacs-Backup
 ============
 
-My .emacs file, backup purpose
+My .emacs file, backup purpose.
 
-List of packages needed:<br>
+**List of packages needed:**
 
-company<br>
-company-c-headers<br>
-flycheck<br>
-glsl-mode<br>
-haskell-mode<br>
-helm<br>
-lua-mode<br>
-qml-mode<br>
-racket-mode<br>
+* company
+* company-c-headers
+* flycheck
+* glsl-mode
+* haskell-mode
+* helm
+* lua-mode
+* qml-mode
+* racket-mode
