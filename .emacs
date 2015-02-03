@@ -42,6 +42,10 @@
 (add-hook 'c++-mode-hook
 	  '(lambda () (setq flycheck-clang-standard-library "libstdc++")))
 
+;;GUI
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+
 ;;GLSL Mode
 (autoload 'glsl-mode "glsl-mode" "GL Shading Language editing mode" t)
 (add-to-list 'auto-mode-alist '("\\.glsl\\'" . glsl-mode))
