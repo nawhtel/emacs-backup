@@ -64,11 +64,14 @@
 (global-set-key (kbd "M-y") 'helm-show-kill-ring)
 (global-set-key (kbd "C-x b") 'helm-mini)
 (global-set-key (kbd "C-x C-f") 'helm-find-files)
+(global-set-key (kbd "C-c h o") 'helm-occur)
 (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
 (add-to-list 'helm-sources-using-default-as-input
 	     'helm-source-man-pages)
 (setq helm-buffers-fuzzy-matching t
+      helm-lisp-fuzzy-completion t
       helm-semantic-fuzzy-match t
+      helm-apropos-fuzzy-match t
       helm-recentf-fuzzy-match t
       helm-imenu-fuzzy-match t
       helm-M-x-fuzzy-match t)
@@ -77,6 +80,9 @@
 (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
 (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
 (add-to-list 'interpreter-mode-alist '("lua" . lua-mode))
+
+;;Projectile
+(projectile-global-mode)
 
 ;;QML Mode
 (autoload 'qml-mode "qml-mode" "Editing Qt Declarative." t)
