@@ -61,8 +61,6 @@
 ;;Helm
 (require 'helm)
 (require 'helm-config)
-(require 'helm-command)
-(require 'helm-semantic)
 (helm-mode 1)
 (global-set-key (kbd "M-x") 'helm-M-x)
 (global-set-key (kbd "M-y") 'helm-show-kill-ring)
@@ -72,13 +70,6 @@
 (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
 (add-to-list 'helm-sources-using-default-as-input
 	     'helm-source-man-pages)
-(setq helm-buffers-fuzzy-matching t
-      helm-lisp-fuzzy-completion t
-      helm-semantic-fuzzy-match t
-      helm-apropos-fuzzy-match t
-      helm-recentf-fuzzy-match t
-      helm-imenu-fuzzy-match t
-      helm-M-x-fuzzy-match t)
 
 ;;Lua Mode
 (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
@@ -102,6 +93,7 @@
 (add-hook 'c++-mode-hook
 	  '(lambda ()
 	     (delq 'company-semantic company-backends)))
+;;semantic-mode doesn't support c++11 well.
 
 ;;Miscellaneous
 (setq visible-bell t)
