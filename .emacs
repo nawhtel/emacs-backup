@@ -45,6 +45,7 @@
 ;;GUI
 (tool-bar-mode -1)
 (menu-bar-mode -1)
+(load-theme 'wombat t)
 
 ;;GLSL Mode
 (autoload 'glsl-mode "glsl-mode" "GL Shading Language editing mode" t)
