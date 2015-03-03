@@ -45,7 +45,7 @@
 ;;GUI
 (tool-bar-mode -1)
 (menu-bar-mode -1)
-(load-theme 'wombat t)
+;(load-theme 'wombat t)
 
 ;;GLSL Mode
 (autoload 'glsl-mode "glsl-mode" "GL Shading Language editing mode" t)
@@ -95,6 +95,9 @@
 	  '(lambda ()
 	     (delq 'company-semantic company-backends)))
 ;;semantic-mode doesn't support c++11 well.
+
+;;Tup Mode
+(require 'tup-mode)
 
 ;;Miscellaneous
 (setq visible-bell t)

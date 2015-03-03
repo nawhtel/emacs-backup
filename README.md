@@ -15,3 +15,4 @@ My .emacs file, backup purpose.
 - lua-mode
 - qml-mode
 - racket-mode
+- tup-mode
