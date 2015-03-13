@@ -19,8 +19,8 @@
 ;;Company Clang
 (add-hook 'c++-mode-hook
 	  '(lambda () (setq company-clang-arguments
-			   (list "-std=c++14"
-				 "-stdlib=libstdc++"))))
+			    (list "-std=c++14"
+				  "-stdlib=libstdc++"))))
 
 ;;Company C Headers
 (require 'company-c-headers)
@@ -94,6 +94,11 @@
 (add-hook 'c++-mode-hook
 	  '(lambda ()
 	     (delq 'company-semantic company-backends)))
+
+(add-hook 'c-mode-hook
+	  '(lambda ()
+	     (add-to-list 'company-backends 'company-semantic)))
+	  
 ;;semantic-mode doesn't support c++11 well.
 
 ;;Tup Mode
