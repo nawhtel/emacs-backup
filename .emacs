@@ -23,12 +23,11 @@
 				  "-stdlib=libstdc++"))))
 
 ;;Company C Headers
-(require 'company-c-headers)
 (add-to-list 'company-backends 'company-c-headers)
 (add-hook 'c++-mode-hook
 	  '(lambda ()
 	    (setq company-c-headers-path-system
-		  (list "/usr/include/c++/4.9.2/"
+		  (list "/usr/include/c++/5.1.0/"
 			"/usr/include/" "/usr/local/include/"))))
 
 ;;Electric-Pair Mode
@@ -44,7 +43,7 @@
 
 ;;GUI
 (tool-bar-mode -1)
-(menu-bar-mode -1)
+;(menu-bar-mode -1)
 ;(load-theme 'wombat t)
 
 ;;GLSL Mode
@@ -61,7 +60,6 @@
 
 ;;Helm
 (require 'helm)
-(require 'helm-config)
 (helm-mode 1)
 (global-set-key (kbd "M-x") 'helm-M-x)
 (global-set-key (kbd "M-y") 'helm-show-kill-ring)
@@ -72,37 +70,10 @@
 (add-to-list 'helm-sources-using-default-as-input
 	     'helm-source-man-pages)
 
-;;Lua Mode
-(autoload 'lua-mode "lua-mode" "Lua editing mode." t)
-(add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
-(add-to-list 'interpreter-mode-alist '("lua" . lua-mode))
-
-;;Projectile
-(projectile-global-mode)
-
-;;QML Mode
-(autoload 'qml-mode "qml-mode" "Editing Qt Declarative." t)
-(add-to-list 'auto-mode-alist '("\\.qml$" . qml-mode))
-
 ;;Racket Mode
 (add-hook 'racket-mode-hook
           '(lambda ()
 	     (define-key racket-mode-map (kbd "C-c r") 'racket-run)))
-
-;;Semantic Mode
-(semantic-mode 1)
-(add-hook 'c++-mode-hook
-	  '(lambda ()
-	     (delq 'company-semantic company-backends)))
-
-(add-hook 'c-mode-hook
-	  '(lambda ()
-	     (add-to-list 'company-backends 'company-semantic)))
-	  
-;;semantic-mode doesn't support c++11 well.
-
-;;Tup Mode
-(require 'tup-mode)
 
 ;;Miscellaneous
 (setq visible-bell t)

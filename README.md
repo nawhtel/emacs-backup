@@ -11,8 +11,4 @@ My .emacs file, backup purpose.
 - glsl-mode
 - haskell-mode
 - helm
-- helm-projectile
-- lua-mode
-- qml-mode
 - racket-mode
-- tup-mode
