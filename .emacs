@@ -26,14 +26,17 @@
 (add-to-list 'company-backends 'company-c-headers)
 (add-hook 'c++-mode-hook
 	  '(lambda ()
-	    (setq company-c-headers-path-system
-		  (list "/usr/include/c++/5.1.0/"
-			"/usr/include/" "/usr/local/include/"))))
+	     (setq company-c-headers-path-system
+		   (list "/usr/include/" "/usr/local/include/"
+			 "/usr/include/c++/5.3.0/"))))
+
+;;Editing
+(setq next-line-add-newlines t)
 
 ;;Electric-Pair Mode
 (electric-pair-mode 1)
 
-;;Flycheck
+;;FlyCheck
 (add-hook 'after-init-hook #'global-flycheck-mode)
 (setq-default flycheck-emacs-lisp-load-path 'inherit)
 (add-hook 'c++-mode-hook
@@ -41,10 +44,20 @@
 (add-hook 'c++-mode-hook
 	  '(lambda () (setq flycheck-clang-standard-library "libstdc++")))
 
+;;FlySpell
+(dolist (hook '(text-mode-hook))
+  (add-hook hook (lambda () (flyspell-mode 1))))
+(dolist (hook '(change-log-mode-hook log-edit-mode-hook))
+  (add-hook hook (lambda () (flyspell-mode -1))))
+;(add-hook 'c++-mode-hook
+;	  (lambda ()
+;	    (flyspell-prog-mode)))
+					;‘flyspell-issue-message-flag'
+
 ;;GUI
 (tool-bar-mode -1)
-;(menu-bar-mode -1)
-;(load-theme 'wombat t)
+					;(menu-bar-mode -1)
+					;(load-theme 'wombat t)
 
 ;;GLSL Mode
 (autoload 'glsl-mode "glsl-mode" "GL Shading Language editing mode" t)
@@ -60,6 +73,7 @@
 
 ;;Helm
 (require 'helm)
+(require 'helm-config)
 (helm-mode 1)
 (global-set-key (kbd "M-x") 'helm-M-x)
 (global-set-key (kbd "M-y") 'helm-show-kill-ring)
@@ -70,10 +84,22 @@
 (add-to-list 'helm-sources-using-default-as-input
 	     'helm-source-man-pages)
 
+;;Org Mode
+(global-set-key "\C-cl" 'org-store-link)
+(global-set-key "\C-ca" 'org-agenda)
+(global-set-key "\C-cc" 'org-capture)
+(global-set-key "\C-cb" 'org-iswitchb)
+
 ;;Racket Mode
 (add-hook 'racket-mode-hook
           '(lambda ()
 	     (define-key racket-mode-map (kbd "C-c r") 'racket-run)))
+
+;;Yasnippet Mode
+(add-to-list 'load-path
+	     "~/.emacs.d/plugins/yasnippet")
+(require 'yasnippet)
+(yas-global-mode 1)
 
 ;;Miscellaneous
 (setq visible-bell t)
