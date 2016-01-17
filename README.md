@@ -11,4 +11,6 @@ My .emacs file, backup purpose.
 - glsl-mode
 - haskell-mode
 - helm
+- org
 - racket-mode
+- yasnippet
