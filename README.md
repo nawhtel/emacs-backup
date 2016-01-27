@@ -8,9 +8,7 @@ My .emacs file, backup purpose.
 - company
 - company-c-headers
 - flycheck
-- glsl-mode
 - haskell-mode
 - helm
 - org
 - racket-mode
-- yasnippet
