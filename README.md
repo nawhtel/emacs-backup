@@ -1,14 +1,14 @@
 Emacs-Backup
 ============
 
-My .emacs file, backup purpose.
+backup purpose.
 
-##### List of packages needed:
+##### Packages installed:
 
 - company
 - company-c-headers
 - flycheck
+- flycheck-pos-tip
 - haskell-mode
 - helm
-- org
 - racket-mode

@@ -49,6 +49,9 @@
 	  '(lambda () (setq flycheck-clang-language-standard "c++11")))
 (add-hook 'c++-mode-hook
 	  '(lambda () (setq flycheck-clang-standard-library "libstdc++")))
+(setq flycheck-display-errors-delay 0.2)
+(with-eval-after-load 'flycheck
+  (flycheck-pos-tip-mode))
 
 ;;FlySpell
 (dolist (hook '(text-mode-hook))
