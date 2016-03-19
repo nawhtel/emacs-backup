@@ -16,24 +16,17 @@
 (setq company-idle-delay 0.07)
 (setq company-minimum-prefix-length 2)
 
-;;Company Clang
-(add-hook 'c++-mode-hook
-	  '(lambda () (setq company-clang-arguments
-			    (list "-std=c++11"
-				  "-stdlib=libstdc++"))))
-
 ;;Company C Headers
 (add-to-list 'company-backends 'company-c-headers)
 (add-hook 'c++-mode-hook
-	  '(lambda ()
-	     (setq company-c-headers-path-system
-		   (list "/usr/include/" "/usr/local/include/"
-			 "/usr/include/c++/5.3.0/"))))
+	  '(lambda () (add-to-list 'company-c-headers-path-system
+				   '"/usr/include/c++/5.3.0/")))
 
 ;;Editing
 (global-set-key (kbd "M-p") 'backward-paragraph)
 (global-set-key (kbd "M-n") 'forward-paragraph)
 (global-set-key (kbd "C-z") 'undo)
+(global-set-key (kbd "C-j") 'join-line)
 
 ;;Electric-Pair Mode
 (electric-pair-mode 1)
@@ -45,23 +38,16 @@
 ;;FlyCheck
 (add-hook 'after-init-hook #'global-flycheck-mode)
 (setq-default flycheck-emacs-lisp-load-path 'inherit)
+(setq flycheck-display-errors-delay 0.2)
+(with-eval-after-load 'flycheck (flycheck-pos-tip-mode))
 (add-hook 'c++-mode-hook
 	  '(lambda () (setq flycheck-clang-language-standard "c++11")))
-(add-hook 'c++-mode-hook
-	  '(lambda () (setq flycheck-clang-standard-library "libstdc++")))
-(setq flycheck-display-errors-delay 0.2)
-(with-eval-after-load 'flycheck
-  (flycheck-pos-tip-mode))
 
 ;;FlySpell
 (dolist (hook '(text-mode-hook))
   (add-hook hook (lambda () (flyspell-mode 1))))
 (dolist (hook '(change-log-mode-hook log-edit-mode-hook))
   (add-hook hook (lambda () (flyspell-mode -1))))
-;;(add-hook 'c++-mode-hook
-;;    (lambda ()
-;;        (flyspell-prog-mode)))
-;;    ‘flyspell-issue-message-flag'
 
 ;;GUI
 (tool-bar-mode 0)
@@ -73,7 +59,6 @@
 (add-hook 'haskell-mode-hook 'haskell-indent-mode)
 
 ;;Helm
-(require 'helm)
 (require 'helm-config)
 (helm-mode 1)
 (global-set-key (kbd "M-x") 'helm-M-x)
