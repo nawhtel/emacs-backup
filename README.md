@@ -5,6 +5,7 @@ backup purpose.
 
 ##### Packages installed:
 
+- avy
 - company
 - company-c-headers
 - flycheck
