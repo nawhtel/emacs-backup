@@ -76,10 +76,5 @@
 (global-set-key "\C-cc" 'org-capture)
 (global-set-key "\C-cb" 'org-iswitchb)
 
-;;Racket Mode
-(add-hook 'racket-mode-hook
-          '(lambda ()
-	     (define-key racket-mode-map (kbd "C-c r") 'racket-run)))
-
 ;;Miscellaneous
 (setq visible-bell t)
