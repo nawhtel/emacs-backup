@@ -20,7 +20,7 @@
 (add-to-list 'company-backends 'company-c-headers)
 (add-hook 'c++-mode-hook
 	  '(lambda () (add-to-list 'company-c-headers-path-system
-				   '"/usr/include/c++/5.3.0/")))
+				   '"/usr/include/c++/6.2.1/")))
 
 ;;Editing
 (global-set-key (kbd "M-p") 'backward-paragraph)
