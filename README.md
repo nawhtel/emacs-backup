@@ -3,8 +3,9 @@ Emacs-Backup
 
 backup purpose.
 
-##### Packages installed:
+##### installed:
 
+- ample-theme
 - company
 - company-c-headers
 - flycheck
