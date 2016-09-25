@@ -38,7 +38,6 @@
 ;;FlyCheck
 (add-hook 'after-init-hook #'global-flycheck-mode)
 (setq-default flycheck-emacs-lisp-load-path 'inherit)
-(setq flycheck-display-errors-delay 0.2)
 (with-eval-after-load 'flycheck (flycheck-pos-tip-mode))
 (add-hook 'c++-mode-hook
 	  '(lambda () (setq flycheck-clang-language-standard "c++11")))
@@ -52,6 +51,7 @@
 ;;GUI
 (tool-bar-mode 0)
 ;;(menu-bar-mode 0)
+(load-theme 'ample-flat t)
 
 ;;Haskell Mode
 (add-hook 'haskell-mode-hook 'haskell-doc-mode)
@@ -75,6 +75,14 @@
 (global-set-key "\C-ca" 'org-agenda)
 (global-set-key "\C-cc" 'org-capture)
 (global-set-key "\C-cb" 'org-iswitchb)
+
+;;Programming Competition
+(add-hook 'c-mode-hook
+	  (lambda ()
+	    (set (make-local-variable 'compile-command)
+		 (concat
+		  (concat "make -k "
+			  buffer-file-name) " all"))))
 
 ;;Miscellaneous
 (setq visible-bell t)
