@@ -1,14 +1,4 @@
 Emacs-Backup
 ============
-
-backup purpose.
-
-##### installed:
-
-- ample-theme
-- company
-- company-c-headers
-- flycheck
-- flycheck-pos-tip
-- haskell-mode
-- helm
+packages: ample-theme, company, company-c-headers, flycheck, 
+flyspell-correct-helm, haskell-mode, helm, helm-descbinds, magit
