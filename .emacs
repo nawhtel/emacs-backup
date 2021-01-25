@@ -1,906 +1,663 @@
-;; TODO: ways to display and open important / frequent files
-;; setq in use-package :init , adjust gc values , set up flymake, go-mode, gnu newsreader, 
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 
-;; General
-;; (setq gc-cons-percentage 0.2)
-;; (setq gc-cons-threshold (* 2 1000 1000))
-(setq load-prefer-newer t)
+(setq gc-cons-threshold 64000000
+      load-prefer-newer t
+      ;; debug-on-error t
+      custom-file "~/.emacs.d/custom.el")
+(load custom-file t)
+(add-hook 'focus-out-hook #'garbage-collect)
+(add-hook 'minibuffer-setup-hook (lambda () (setq gc-cons-threshold most-positive-fixnum)))
+(add-hook 'minibuffer-exit-hook (lambda () (setq gc-cons-threshold (* 64 1000 1000))))
 
+(setq frame-title-format "%f - %m")
+;; (setq frame-title-format '((:eval (if (buffer-file-name)
+;; (abbreviate-file-name (buffer-file-name)) "%b")) (:eval (if (buffer-modified-p) " •")) " - %m"))
+
+(when (eq system-type 'darwin)
+  (setq initial-frame-alist '((left . 1.0) (width . 100) (fullscreen . fullheight)))
+  (add-to-list 'default-frame-alist '(font . "Monaco-13"))
+  (add-to-list 'default-frame-alist '(ns-appearance . dark))
+  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+  ;; (add-to-list default-frame-alist '(undecorated . t))
+  (setq mac-command-modifier 'meta
+	mac-option-modifier 'super
+	default-directory "~/"
+	;; insert-directory-program "gls"
+	frame-title-format nil
+	inhibit-splash-screen t))
+
+
+;; Base
+(setq-default cursor-type 'bar
+	      ;; indent-tabs-mode nil
+	      indicate-buffer-boundaries '((bottom . left)))
 (setq backup-directory-alist '(("." . "~/.emacs.d/backup"))
-      auto-save-file-name-transforms '((".*" "~/.emacs.d/save/"))
-      delete-by-moving-to-trash t
+      tramp-backup-directory-alist backup-directory-alist
       version-control t
-      kept-new-versions 7
+      kept-new-versions 5
       delete-old-versions t
       backup-by-copying-when-mismatch t)
-
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
-
-(eval-when-compile
-  (require 'use-package))
-
-(use-package use-package
-  :custom
-  (use-package-enable-imenu-support t)
-  :config
-  ;; (setq use-package-always-ensure t) ;;on new machine
-  (setq use-package-verbose t))
-
-(use-package amx
-  :bind ("M-x" . amx))
-
-(use-package dired
-  :hook (dired-mode . dired-omit-mode)  ; Use C-x M-o to show omitted files.
-  :bind (:map dired-mode-map
-	      ("C-c c-l" . dired-up-directory))
-  :config
-  ;; (use-package diredful
-  ;;   :config (diredful-mode))
-  ;; Notes: WDired can be enabled with C-x C-q and compiled with C-c C-c
-  (setq dired-dwim-target t
-        dired-auto-revert-buffer t
-        dired-recursive-copies 'always
-        dired-listing-switches "-laGh1v --group-directories-first")
-  (use-package dired-x))
-
-(use-package exec-path-from-shell :defer t)
-;; prepare for mac: vars, rc, font(xft?), x window difference, super key and command key relation, xdg dir / freedesktop difference (e.g. trash can), bsd difference, cross-platform specifics and check, special considerations for laptop, mac filesystem hierarchy, csh difference, mac package management (brew or ports or nix or no management at all) specifics
-
-;; ex:
-;; (use-package reveal-in-osx-finder
-;;   :bind ("C-c f" . reveal-in-osx-finder))
-
-(use-package ivy
-  :demand t
-  :init
-  (setq enable-recursive-minibuffers t)
-  :bind (([remap list-buffers] . ivy-switch-buffer) ;;C-c C-k to kill buffer, occur for ibuffer
-         ("C-c C-r" . ivy-resume)
-         :map ivy-minibuffer-map
-	 ("C-i" . ivy-done)
-	 ("C-<return>" . ivy-done)
-         ("C-l" . ivy-backward-kill-word))
-  :config
-  (setq ivy-re-builders-alist '((t . ivy--regex-fuzzy))
-	;; ivy-wrap t
-	ivy-height 12
-	ivy-use-virtual-buffers t
-	ivy-use-selectable-prompt t
-	ivy-initial-inputs-alist nil
-	ivy-format-function 'ivy-format-function-arrow)
-  (add-to-list 'ivy-re-builders-alist '(swiper . ivy--regex-plus) t)
-  ;;  (add-to-list 'ivy-re-builders-alist '(amx . ivy--regex-fuzzy) t) ;; ido like behavior
-  (ivy-mode 1))
-
-(use-package ivy-rich
-  :after ivy
-  :config
-  (setq ivy-rich-path-style 'abbrev
-	ivy-virtual-abbreviate 'full
-	ivy-rich-switch-buffer-align-virtual-buffer t)
-  (ivy-set-display-transformer 'ivy-switch-buffer 'ivy-rich-switch-buffer-transformer))
-
-(use-package counsel
-  :after ivy
-  :demand t
-  :bind (("M-y"     . counsel-yank-pop)
-         ("C-@" . counsel-mark-ring)
-         ("C-*"     . counsel-org-agenda-headlines)
-         ("C-x f" . counsel-recentf)
-         ("C-c i" . counsel-semantic-or-imenu)
-         ("C-c e v"  . counsel-set-variable)
-         ("C-c e f" . counsel-find-library)
-         ("C-c e l" . counsel-load-library)
-         ("M-s f" . counsel-file-jump)
-         ("M-s g" . counsel-rg)
-         ("M-s j" . counsel-dired-jump)
-         ([remap bookmark-jump] . counsel-bookmark)
-         ([remap find-file] . counsel-find-file)
-         ([remap describe-function] . counsel-describe-function)
-         ([remap describe-variable] . counsel-describe-variable))
-  :config
-  (setq counsel-find-file-ignore-regexp "\\`\\."
-	counsel-dired-listing-switches "-laGh1v --group-directories-first"
-        counsel-linux-app-format-function
-        'counsel-linux-app-format-function-name-only)
-  (add-to-list 'ivy-sort-matches-functions-alist
-	       '(counsel-find-file . ivy--sort-files-by-date) t))
-
-(use-package flx)
-
-(use-package midnight
-  :config
-  (midnight-delay-set 'midnight-delay "4:30am"))
-
-(use-package recentf
-  :config
-  (setq recentf-max-menu-items 30
-	recentf-max-saved-items 100)
-  (add-to-list 'recentf-exclude (expand-file-name package-user-dir))
-  (recentf-mode t))
-
-(use-package saveplace
-  :config
-  (save-place-mode t))
-
-;; use-package save-visited-files
-;;   :config (turn-on-save-visited-files-mode))
-;; desktop-save
-
-;; Completion
-(use-package company
-  :hook (after-init . global-company-mode)
-  :init
-  (add-to-list 'completion-styles 'initials t)
-  :bind (:map company-active-map
-	      ([tab] . company-complete)
-	      ("M-i" . company-complete-selection)
-	      ("C-d" . company-complete-selection)
-	      ("C-p" . company-select-previous)
-	      ("C-n" . company-select-next)
-	      ("C-s" . company-filter-candidates)
-	      ("C-M-s" . company-search-candidates)
-	      :map company-search-map
-	      ("C-p" . company-select-previous)
-	      ("C-n" . company-select-next))
-  :config
-  (setq company-show-numbers t
-	;; company-idle-delay 0.3
-	company-selection-wrap-around t
-	company-dabbrev-minimum-length 3
-	company-dabbrev-ignore-case t
-	company-dabbrev-code-ignore-case t
-	;; company-dabbrev-char-regexp "[[:word:]_:@.-]+"
-	company-transformers '(company-sort-by-occurrence)))
-
-(use-package company-anaconda
-  :after (company anaconda-mode)
-  :hook ((python-mode . anaconda-mode)
-	 (python-mode . anaconda-eldoc-mode))
-  :config
-  (add-to-list 'company-backends 'company-anaconda))
-
-(use-package company-c-headers
-  :after company
-  :config
-  (add-to-list 'company-backends 'company-c-headers)
-  (add-hook 'c++-mode-hook
-	    (lambda () (add-to-list 'company-c-headers-path-system "/usr/include/c++/8.1.0"))))
-
-(use-package bash-completion :defer t)
-;; (bash-completion-setup))
-
-;; (use-package fish-completion
-;;   :after (:any shell eshell)
-;;   :config
-;;   (setq fish-completion-fallback-on-bash-p t)
-;;   (global-fish-completion-mode))
-
-(use-package yasnippet
-  :hook (after-init . yas-global-mode)
-  :bind (:map yas-minor-mode-map
-	      ("C-c y" . company-yasnippet))
-  :config
-  ;; (setq yas-prompt-functions '(yas-completing-prompt))
-  ;; (setq yas-triggers-in-field t)
-  (setq yas-verbosity 1)
-  (setq yas-wrap-around-region t))
-
-(use-package yasnippet-snippets :after yasnippet)
-
-;; Editing
-(setq-default indent-tabs-mode nil)
+(setq initial-scratch-message nil
+      large-file-warning-threshold 50000000
+      echo-keystrokes 0.5
+      bidi-inhibit-bpa t
+      window-combination-resize t
+      ring-bell-function 'ignore)
 (setq kill-whole-line t
       ;; tab-always-indent 'complete
-      select-enable-primary t
-      save-interprogram-paste-before-kill t
-      mouse-yank-at-point t
-      kill-ring-max 80)
+      tabify-regexp "^\t* [ \t]+"
+      reb-re-syntax 'string
+      sentence-end-double-space nil
+      backward-delete-char-untabify-method 'hungry
+      save-interprogram-paste-before-kill t)
+(setq switch-to-buffer-preserve-window-point t
+      ;; recenter-positions '(top middle bottom)
+      scroll-error-top-bottom t
+      scroll-margin 5
+      scroll-conservatively 3
+      scroll-preserve-screen-position t
+      set-mark-command-repeat-pop t)
+(setq isearch-lazy-count t
+      lazy-count-prefix-format "[%s/%s] "
+      lazy-count-suffix-format nil
+      ;; search-exit-option t
+      search-whitespace-regexp ".*?"
+      isearch-lazy-highlight t)
+(setq
+ ;; focus-follows-mouse t
+ ;; mouse-autoselect-window 0.3
+ ;; x-stretch-cursor t
+ compilation-always-kill t
+ compilation-ask-about-save nil
+ compilation-scroll-output 'first-error
+ ediff-split-window-function 'split-window-horizontally
+ ediff-window-setup-function 'ediff-setup-windows-plain
+ ediff-diff-options "-w")
+(require 'dired-x)
+(setq dired-recursive-copies 'always
+      dired-isearch-filenames t
+      dired-dwim-target t
+      dired-auto-revert-buffer t
+      dired-listing-switches "-lGhv --group-directories-first") ;; -laGh1v
+(add-hook 'dired-mode #'dired-omit-mode)
+(require 'recentf)
+(add-to-list 'recentf-exclude (expand-file-name package-user-dir))
+(setq recentf-max-menu-items 30)
+(setq recentf-max-saved-items 50)
+
+(require 'iso-transl)
+(require 'whitespace)
+(setq whitespace-line-column 90
+      whitespace-style '(face tabs trailing lines-tail space-before-tab))
+
+;;(global-superword-mode)
+(add-hook 'prog-mode-hook #'subword-mode)
+(add-hook 'prog-mode-hook #'whitespace-mode)
+(add-hook 'text-mode-hook #'visual-line-mode)
+;; (add-hook 'text-mode-hook 'abbrev-mode)
+;; (setq text-mode-hook '(turn-on-auto-fill text-mode-hook-identify))
+(add-hook 'ibuffer-hook #'ibuffer-auto-mode)
+(add-hook 'c-mode-common-hook (lambda () (c-toggle-auto-state)))
+
+(require 'isearch-dabbrev)
+
+;; (mouse-avoidance-mode 'banish)
+;; (global-display-line-numbers-mode)
+(column-number-mode)
+(tool-bar-mode 0)
+;; (display-time-mode)
+;; (scroll-bar-mode 0)
+(size-indication-mode)
+
+(global-auto-revert-mode)
+(save-place-mode)
+(recentf-mode)
+(winner-mode)
+;; (auto-insert-mode)
 
 (delete-selection-mode)
 (electric-pair-mode)
-(add-hook 'text-mode-hook 'visual-line-mode)
-(add-hook 'prog-mode-hook 'subword-mode)
-;;(global-superword-mode)
-(require 'iso-transl)
+(blink-cursor-mode -1)
+(show-paren-mode)
+;; (remove-hook 'post-self-insert-hook 'blink-paren-post-self-insert-function)
+
+
+;; Packages
+;; (add-to-list 'completion-styles 'flex t)
+;; (add-to-list 'completion-styles 'substring t)
+(require 'company)
+(setq company-idle-delay 0.2
+      company-minimum-prefix-length 2
+      company-selection-wrap-around t
+      company-tooltip-flip-when-above t
+      company-tooltip-align-annotations t
+      company-dabbrev-code-ignore-case t
+      company-search-regexp-function 'company-search-flex-regexp
+      ;; company-transformers '(company-sort-by-occurrence)
+      company-global-modes '(not org-mode)
+      )
+(global-company-mode)
+(push 'company-ghci company-backends)
+;; (add-hook 'haskell-mode-hook (lambda () (set (make-local-variable 'company-backends) (append '((company-capf company-dabbrev-code)) company-backends))))
+
+(require 'selectrum)
+(require 'selectrum-prescient)
+(require 'prescient)
+(selectrum-mode)
+;; (add-to-list 'prescient-filter-method 'fuzzy)
+(prescient-persist-mode)
+(selectrum-prescient-mode)
+(setq selectrum-count-style 'current/matches)
+(require 'embark)
+(require 'consult)
+(require 'embark-consult)
+(add-hook 'embark-collect-mode-hook 'embark-consult-preview-minor-mode)
+(require 'marginalia)
+(marginalia-mode)
+(setq marginalia-annotators '(marginalia-annotators-heavy))
+(require 'company-prescient)
+(company-prescient-mode)
+
+(setq avy-background t
+      avy-all-windows t
+      avy-timeout-seconds 0.35)
+(setq avy-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l ?e ?r ?u ?i))
+
+(require 'expand-region)
+
+(setq help-window-select t)
+(require 'shackle)
+(setq shackle-rules '((compilation-mode :select t)
+		      (occur-mode :select t)
+		      (help-mode :align 'below :size 0.3 :select t)))
+(shackle-mode)
+(defun isearch-exit-why (&rest _)
+  (isearch-exit))
+(advice-add 'isearch-occur :before 'isearch-exit-why)
+
+;; (global-hl-line-mode)
+(volatile-highlights-mode)
+;; (idle-highlight-mode)
+(setq highlight-symbol-idle-delay 0.3)
+(add-hook 'prog-mode-hook #'highlight-symbol-mode)
+(add-hook 'text-mode-hook #'highlight-symbol-mode)
+
+(require 'magit)
+(setq magit-diff-refine-hunk t)
+;; (setq magit-display-buffer-function
+;;       #'magit-display-buffer-same-window-except-diff-v1)
+(add-hook 'magit-pre-refresh-hook #'diff-hl-magit-pre-refresh)
+(add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh)
+(global-diff-hl-mode +1)
+;; (diff-hl-margin-mode)
+(add-hook 'dired-mode-hook #'diff-hl-dired-mode)
+
+(dolist (hook '(eval-expression-minibuffer-setup-hook
+		lisp-mode-hook emacs-lisp-mode-hook scheme-mode-hook racket-mode-hook))
+  (add-hook hook #'paredit-mode)
+  )
+;; (setq scheme-program-name "racket")
+
+;; (add-hook 'c-mode-common-hook (lambda () (c-toggle-auto-state)))
+;; programming competition
+;; (add-hook 'c-mode-common-hook
+;;               (lambda ()
+;;                 (local-set-key (kbd "C-c C-j") 'compile)
+;;                 (local-set-key (kbd "C-c C-k") 'eshell)
+;;                 (set (make-local-variable 'compile-command)
+;;                      (concat (concat "make -k "
+;; buffer-file-name) " build")))))
+;; (c-toggle-auto-newline)
+
+(require 'eshell-z)
+(require 'eshell-syntax-highlighting)
+(eshell-syntax-highlighting-global-mode)
+
+(defun my-inf-sml-mode-hook () "Local defaults for inferior SML mode"
+       (add-hook 'comint-output-filter-functions 'comint-truncate-buffer)
+       (setq      comint-scroll-show-maximum-output t)
+       (setq      comint-input-autoexpand nil))
+(add-hook 'inferior-sml-mode-hook #'my-inf-sml-mode-hook)
+;; (add-hook 'sml-mode-hook (lambda (setq sml-indent-level 2)))
+
+(require 'haskell-mode)
+(setq haskell-process-auto-import-loaded-modules t
+      haskell-interactive-popup-errors nil
+      haskell-process-log t
+      haskell-process-suggest-remove-import-lines t
+      ;; haskell-hoogle-command "hoogle"
+      haskell-doc-prettify-types nil)
+(add-hook 'haskell-mode-hook #'interactive-haskell-mode)
+(add-hook 'haskell-mode-hook #'haskell-doc-mode)
+(add-hook 'haskell-mode-hook #'haskell-decl-scan-mode)
+(add-hook 'haskell-mode-hook #'haskell-auto-insert-module-template)
+
+(setq org-startup-folded nil
+      org-startup-with-inline-images t
+      org-startup-with-latex-preview t
+      org-hide-leading-stars t
+
+      org-log-done 'time
+      org-log-reschedule 'time
+      org-adapt-indentation nil
+      ;; org-startup-indented t
+      org-catch-invisible-edits 'show
+      org-special-ctrl-a/e t
+      org-return-follows-link t
+
+      org-src-fontify-natively t
+      org-src-preserve-indentation t
+      org-src-tab-acts-natively t
+
+      org-directory "~/org"
+      org-agenda-files '("~/org")
+      org-default-notes-file (expand-file-name "notes.org" org-directory))
+
+;; (pdf-tools-install)
+
+(setq TeX-auto-save t
+      TeX-parse-self t)
 
 (put 'narrow-to-region 'disabled nil)
 (put 'narrow-to-page   'disabled nil)
 
+(require 'diminish)
+
+(diminish 'eldoc-mode)
+(diminish 'hi-lock-mode)
+(diminish 'volatile-highlights-mode)
+(diminish 'whitespace-mode)
+
+;; (load-theme 'ample t)
+(nimbus-theme)
+(load-theme 'tango-2 t)
+
+(custom-set-faces
+ '(line-number ((t (:inherit default :foreground "#686a66"))))
+ '(line-number-current-line ((t (:inherit default :foreground "#608079"))))
+ '(hl-line ((t (:extend t :background "gray13"))))
+ '(idle-highlight ((t (:inherit region :background "gray20"))))
+ '(highlight-symbol-face ((t (:inherit region :background "gray20"))))
+ '(whitespace-trailing ((t :background "grey15")))
+ '(show-paren-match ((t :foreground "#fffe0a" :background "gray40")))
+ ;; '(selectrum-primary-highlight ((t (:background "#1d9a79" :foreground "#4e11c92"))))
+ ;; '(selectrum-secondary-highlight ((t (:background "#ad3632" :foreground "#c23122" :underline t))))
+ ;; '(selectrum-current-candidate ((t (:weight bold :background "darkseagreen2"))))
+ )
+;; (set-face-attribute 'default nil :family "Dejavu Sans Mono" :height 130 :background "#1a1a1a")
+
+
+;; Functions
+(defun fill-line ()
+  "Join the following line onto the current line."
+  (interactive)
+  (join-line -1))
+(defun yank-and-indent ()
+  "Yank and then indent the newly formed region according to mode."
+  (interactive)
+  (yank)
+  (call-interactively 'indent-region))
 (defun align-to-string (beg end)
   "Align region along character CHAR from BEG to END."
   (interactive "r")
   (let ((char (read-string "string: ")))
     (align-regexp beg end (concat "\\(\\s-*\\)" char))))
-
-(defun clear-line ()
-  "Clear the line, but don't delete it."
+(defun indent-buffer (arg)
+  "Indent the whole buffer, delete trailing spaces, with C-u also tabify buffer"
+  (interactive "p")
+  (indent-region (point-min) (point-max))
+  (delete-trailing-whitespace)
+  (if (= arg 4)
+      (tabify (point-min) (point-max))))
+(defun eshell-new ()
+  "Open a new eshell buffer."
   (interactive)
-  (beginning-of-line)
-  (kill-line)
-  (indent-according-to-mode))
-
-(defun fill-line ()
-  "Join the following line onto the current line."
+  (eshell t))
+(defun restclient ()
+  "testing buffer with restclient"
   (interactive)
-  (join-line -1))
-
-(defun indent-buffer ()
-  "Indent the whole buffer."
-  (interactive)
-  (indent-region (point-min) (point-max)))
-
+  (with-current-buffer (get-buffer-create "*restclient*")
+    (restclient-mode)
+    (pop-to-buffer (current-buffer)))
+  )
 (defun narrow-dwim ()
   "Widen if currently narrowed, else narrow to function."
   (interactive)
   (cond
    ((buffer-narrowed-p) (widen))
    (t (narrow-to-defun))))
-
-(defun open-buffer-file ()
-  "Open buffer file."
+(defun narrow-quotes ()
+  "Widen if currently narrowed, else narrow inside strings."
   (interactive)
-  (find-file "~/org/buffer.org"))
-
+  (cond
+   ((buffer-narrowed-p) (widen))
+   (t (save-excursion
+	(when (er--point-inside-string-p)
+	  (let ((beg (progn
+		       (er--move-point-backward-out-of-string)
+		       (forward-char)
+		       (point)))
+		(end (progn
+		       (er--move-point-forward-out-of-string)
+		       (backward-char)
+		       (point))))
+	    (narrow-to-region beg end)))))))
+(defun sort-words (reverse beg end)
+  "Sort words in region alphabetically, in REVERSE if negative.
+    Prefixed with negative \\[universal-argument], sorts in reverse.
+    The variable `sort-fold-case' determines whether alphabetic case
+    affects the sort order.
+    See `sort-regexp-fields'."
+  (interactive "*P\nr")
+  (sort-regexp-fields reverse "\\w+" "\\&" beg end))
+(defun browse-current-file ()
+  "Open the current file as a URL using `browse-url'."
+  (interactive)
+  (let ((file-name (buffer-file-name)))
+    (if (and (fboundp 'tramp-tramp-file-p)
+	     (tramp-tramp-file-p file-name))
+	(error "Cannot open tramp file")
+      (browse-url (concat "file://" file-name)))))
+(defun edit-dot-emacs ()
+  (interactive)
+  (find-file "~/.emacs"))
+(defun delete-this-file ()
+  "Delete the current file, and kill the buffer."
+  (interactive)
+  (unless (buffer-file-name)
+    (error "No file is currently being edited"))
+  (when (yes-or-no-p (format "Really delete '%s'?"
+			     (file-name-nondirectory buffer-file-name)))
+    (delete-file (buffer-file-name))
+    (kill-this-buffer)))
+(defun rename-this-file-and-buffer (new-name)
+  "Renames both current buffer and file it's visiting to NEW-NAME."
+  (interactive "sNew name: ")
+  (let ((name (buffer-name))
+	(filename (buffer-file-name)))
+    (unless filename
+      (error "Buffer '%s' is not visiting a file!" name))
+    (progn
+      (when (file-exists-p filename)
+	(rename-file filename new-name 1))
+      (set-visited-file-name new-name)
+      (rename-buffer new-name))))
+;; (defun rename-this-file-and-buffer (new-name)
+;;   "Renames both current buffer and file it's visiting to NEW-NAME."
+;;   (interactive "sNew name: ")
+;;   (let ((name (buffer-name))))
+;;   (filename (buffer-file-name)
+;;             (unless filename
+;;               (error "Buffer '%s' is not visiting a file!" name))
+;;             (progn
+;;               (when (file-exists-p filename))))
+;;   (rename-file filename new-name 1
+;;                (set-visited-file-name new-name)
+;;                (rename-buffer new-name)
+;; 	       (set-buffer-modified-p nil)
+;; 	       ))
 (defun open-line-and-indent (n)
   "N lines -------|."
   (interactive "*p")
   (beginning-of-line)
   (open-line n)
   (indent-according-to-mode))
-
 (defun open-line-below ()
   "Open a new line below, even if the point is midsentence."
   (interactive)
   (end-of-line)
   (newline-and-indent))
-
+(defun split-window-below-cycle ()
+  (interactive)
+  (with-selected-window (split-window-below)
+    (call-interactively #'iflipb-next-buffer)))
+(defun split-window-right-cycle ()
+  (interactive)
+  (with-selected-window (split-window-right)
+    (call-interactively #'iflipb-next-buffer)))
+(defvar nyan-prompt-timer nil)
+(defun nyan-at-time (time)
+  "Nyan after a given time."
+  (interactive "sRun at time: ")
+  (when (timerp nyan-prompt-timer)
+    (cancel-timer nyan-prompt-timer))
+  (setq nyan-prompt-timer
+	(run-at-time time nil
+		     (lambda () (zone-nyan-preview) (setq nyan-prompt-timer nil))))
+  (message (concat "Nyan in " time)))
+(defun nyan-at-quater-or-cancel ()
+  "Nyan after 15 minutes, or cancel a existing timer."
+  (interactive)
+  (cond
+   ((timerp nyan-prompt-timer)
+    (cancel-timer nyan-prompt-timer)
+    (setq nyan-prompt-timer nil)
+    (message (concat "Canceled Nyan timer")))
+   (t
+    (nyan-at-time "15 min"))))
 (defun region-history-other (begin end)
   "Display the source controlled history of region from BEGIN to END in \
 another window."
   (interactive "r")
   (vc-region-history begin end)
   (other-window 1))
-
-;; bindable keys
-;; C-x C-u C-x C-l C-M-/
-;; C-!     C-$     C-^     C-(     C-=     C-}     C-:     C-|     C-.     C-`
-;; C-#     C-%     C-&     C-)     C-{     C-;     C-"     C-,     C-?     C-~     
-;; C-= C-, M-[ M-] c-` c-;
-
-(bind-keys
- ("C-o" . open-line-and-indent)
- ("M-j" . fill-line)
- ("M-r" . isearch-backward)
- ("C-r" . backward-kill-word)
- ("M-p" . backward-paragraph)
- ("M-n" . forward-paragraph)
- ("M-l" . move-to-window-line-top-bottom)
- ("C-d" . delete-forward-char)
- ("M-o" . other-window)
- ("M-=" . align-to-string)
- ("C-x j" . join-line)
- ("C-x s" . save-all)
- ("C-c C-i" . indent-buffer)
- ("C-x n d" . narrow-dwim)
- ("C-c h" . region-history-other)
- ("C-S-k" . clear-line)
- ("<C-return>" . open-line-below)
- ;;("<S-return>")
- ([f5] . revert-buffer)
- ([remap just-one-space] . cycle-spacing)
- ([remap capitalize-word] . capitalize-dwim)
- ([remap upcase-word] . upcase-dwim)
- ([remap downcase-word] . downcase-dwim)
- :map help-map
- ("C-i" . info-display-manual)
- )
-
-(use-package easy-kill
-  :bind ([remap kill-ring-save] . easy-kill))
-
-(use-package expand-region
-  :bind ("C-c C-e" . er/expand-region))
-
-(use-package evil
-  :bind ("C-c v" . evil-mode))
-
-(use-package evil-nerd-commenter
-  :bind ("M-;" . evilnc-comment-or-uncomment-lines))
-
-(use-package flymake
-  :bind (:map flymake-mode-map
-              ("C-;" . flymake-goto-next-error)
-              ("C-:" . flymake-goto-prev-error)))
-
-(use-package flyspell
-  ;; :hook ((text-mode . flyspell-mode))
-  ;;	 (prog-mode . flyspell-prog-mode))
-  :bind (:map flyspell-mode-map
-              ([f6] . cycle-ispell-languages))
-  :config
-  ;;  (setq flyspell-issue-message-flag nil)
-  ;; (define-key flyspell-mode-map (kbd "C-M-i") nil)
-  ;; (setq flyspell-auto-correct-binding (kbd "C-M-;")))
-  (defvar lang-ring)
-  (let ((langs '("francais" "american")))
-    (setq lang-ring (make-ring (length langs)))
-    (dolist (elem langs) (ring-insert lang-ring elem)))
-  (defun cycle-ispell-languages ()
-    "Cycle through dictionary."
-    (let ((lang (ring-ref lang-ring -1)))
-      (ring-insert lang-ring lang)
-      (ispell-change-dictionary lang))))
-
-(use-package flyspell-correct-ivy
-  :after flyspell
-  :bind (:map flyspell-mode-map
-              ("C-;" . flyspell-correct-previous-word-generic)))
-
-(use-package goto-last-change
-  :bind ("C-?" . goto-last-change))
-
-;; (use-package hideshow
-;;   :bind (:map hs-minor-mode-map
-;;               ("C-c C-t" . hs-toggle-hiding)
-;;               ("C-c @" . counsel-mark-ring)
-;;               ("C-c C-M-h" . hs-hide-all)
-;;               ("C-c C-M-l" . hs-hide-level)
-;;               ("C-c C-M-s" . hs-show-all)))
-
-;; (use-package reveal
-;;   :diminish
-;;   :hook (hs-minor-mode . reveal-mode))
-
-(use-package ibuffer
-  :bind (("M-s b" . ibuffer)
-         ("C-c C-b" . ibuffer))
-  :config
-  (add-hook 'ibuffer-hook 'ibuffer-auto-mode))
-
-(use-package multiple-cursors
-  :bind (("C-S-c C-S-c" . mc/edit-lines)
-         ("C-S-c C-a" . mc/edit-beginnings-of-lines)
-         ("C-S-c C-e" . mc/edit-ends-of-lines)
-         ("C-<" . mc/mark-previous-like-this)
-         ("C->" . mc/mark-next-like-this)
-         ("C-c C-<" . mc/mark-all-like-this)
-	 ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
-
-;; experiment with this snippet
-(use-package paredit
-  :hook ((lisp-mode emacs-lisp-mode) . paredit-mode)
-  :bind (:map paredit-mode-map
-              ("M-k"   . paredit-raise-sexp)
-              ("M-I"   . paredit-splice-sexp)
-              ("C-M-l" . paredit-recentre-on-sexp)
-              ("C-c ( n"   . paredit-add-to-next-list)
-              ("C-c ( p"   . paredit-add-to-previous-list)
-              ("C-c ( j"   . paredit-join-with-next-list)
-              ("C-c ( J"   . paredit-join-with-previous-list)
-              :map lisp-mode-map
-              ("<return>" . paredit-newline)
-              :map emacs-lisp-mode-map
-              ("<return>" . paredit-newline))
-  :config
-  (eldoc-add-command 'paredit-backward-delete 'paredit-close-round))
-
-(use-package pyim
-  :demand t
-  :bind (("C-c C-p" . toggle-input-method) ;与 pyim-probe-dynamic-english 配合
-	 ("C-c C-SPC" . toggle-input-method))
-  :config
-  ;; (pyim-isearch-mode 1)
-  ;; (add-hook 'after-init-hook
-  ;; '(lambda () (pyim-restart-1 t)))
-  (use-package pyim-basedict
-    :config (pyim-basedict-enable))
-  (setq default-input-method "pyim"
-	pyim-page-tooltip 'posframe))
-
-(use-package re-builder
-  :config
-  (setq reb-re-syntax 'string))
-
-(use-package string-edit
-  :bind ("C-c C-'" . string-edit-at-point))
-
-;; Jumping
-(setq switch-to-buffer-preserve-window-point t
-      ;; recenter-positions '(middle bottom top)
-      set-mark-command-repeat-pop t
-      isearch-allow-scroll t
-      auto-window-vscroll nil
-      scroll-step 0
-      scroll-error-top-bottom t
-      scroll-conservatively 10000
-      scroll-preserve-screen-position t)
-
-(windmove-default-keybindings)
-
-(use-package avy
-  :bind (("C-c j" . avy-goto-word-or-subword-1)
-         ("C-'"   . avy-goto-char-timer)
-         ("M-s s" . avy-goto-line))
-  :config
-  (setq avy-background t)
-  (setq avy-all-windows t)
-  (setq avy-timeout-seconds 0.4)
-  (setq avy-styles-alist '((ivy-avy . pre) (avy-goto-line . pre))))
-
-(use-package avy-zap
-  :after avy
-  :bind (("C-c C-z" . avy-zap-up-to-char-dwim)
-         ("M-z" . avy-zap-to-char-dwim)))
-
-;; (use-package ace-mc
-;;     :bind (("<C-m> h"   . ace-mc-add-multiple-cursors)
-;; 	   ("<C-m> M-h" . ace-mc-add-single-cursor)))
-
-(use-package ace-pinyin :defer t)
-
-(use-package ace-window
-  :bind ("M-o" . ace-window)
-  :config
-  ;;(setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-  )
-
-(use-package dumb-jump
-  :bind (("M-s g" . dumb-jump-go-other-window)
-         ("M-s j" . dumb-jump-go)
-         ("M-s q" . dumb-jump-quick-look)
-         ("M-s p" . dumb-jump-back))
-  :config
-  (setq dumb-jump-prefer-searcher 'ag)
-  (setq dumb-jump-selector 'ivy))
-
-(use-package imenu-anywhere)
-
-(use-package link-hint
-  :after avy
-  :bind ("C-c l" . link-hint-open-link)
-  :config
-  (setq link-hint-avy-style 'pre))
-
-(use-package swiper
-  :after ivy
-  :bind (("C-s" . swiper)
-         ("C-c C-s" . swiper-all)
-         :map swiper-map
-         ("C-l" . swiper-recenter-top-bottom)))
-
-;; Display
-(setq-default line-spacing 1
-              cursor-type 'bar)
-(setq global-hl-line-sticky-flag t
-      help-window-select t
-      display-time-default-load-average 1
-      window-combination-resize t
-      echo-keystrokes 0.25)
-
-;;(menu-bar-mode 0)
-(tool-bar-mode 0)
-(scroll-bar-mode 0)
-(horizontal-scroll-bar-mode 0)
-(column-number-mode)
-(display-time-mode)
-;;(global-hl-line-mode 0)
-;;(whitespace-mode)
-(mouse-avoidance-mode 'banish)
-(show-paren-mode)
-(remove-hook 'post-self-insert-hook 'blink-paren-post-self-insert-function)
-;;(add-hook 'focus-out-hook 'balance-windows)
-
-;; (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b")) (:eval (if (buffer-modified-p) " •")) " - %m"))
-
-(use-package ample-theme :defer t)
-
-(use-package beacon
-  :config
-  (setq beacon-size 20)
-  (setq beacon-lighter "")
-  (beacon-mode))
-
-(use-package eyebrowse
-  :config
-  ;;(setq eyebrowse-new-workspace t)
-  (setq eyebrowse-wrap-around t)
-  (eyebrowse-mode))
-
-(use-package highlight-numbers
-  :hook (prog-mode . highlight-numbers-mode))
-
-(use-package mode-line-bell
-  :config
-  (mode-line-bell-mode 1))
-
-(use-package nimbus-theme
-  :config
-  (nimbus-theme))
-
-;; (use-package page-break-lines
-;;   :config
-;;   (global-page-break-lines-mode))
-
-(use-package powerline
-  :after nimbus-theme
-  :config
-  (set-face-background 'mode-line "#5080b0") ;; a bit darker than steelblue
-  (set-face-foreground 'powerline-active2 "coral") ;; lighter than tomato
-  (set-face-background 'powerline-active2 "grey18")
-  (setq powerline-default-separator 'arrow)
-  (defun powerline-default-theme-alt ()
-    "Setup the default mode-line."
-    (interactive)
-    (setq-default mode-line-format
-		  '("%e"
-		    (:eval
-		     (let* ((active (powerline-selected-window-active))
-			    (mode-line-buffer-id (if active 'mode-line-buffer-id 'mode-line-buffer-id-inactive))
-			    (mode-line (if active 'mode-line 'mode-line-inactive))
-			    (face0 (if active 'powerline-active0 'powerline-inactive0))
-			    (face1 (if active 'powerline-active1 'powerline-inactive1))
-			    (face2 (if active 'powerline-active2 'powerline-inactive2))
-			    (separator-left (intern (format "powerline-%s-%s"
-							    (powerline-current-separator)
-							    (car powerline-default-separator-dir))))
-			    (separator-right (intern (format "powerline-%s-%s"
-							     (powerline-current-separator)
-							     (cdr powerline-default-separator-dir))))
-			    (lhs (list (powerline-raw "%*" face0 'l)
-				       (when powerline-display-buffer-size
-					 (powerline-buffer-size face0 'l))
-				       (when powerline-display-mule-info
-					 (powerline-raw mode-line-mule-info face0 'l))
-				       (powerline-buffer-id `(mode-line-buffer-id ,face0) 'l)
-				       (powerline-raw "%02l:%2c" face0)
-				       (when (and (boundp 'which-func-mode) which-func-mode)
-					 (powerline-raw which-func-format face0 'l))
-				       (powerline-raw " " face0)
-				       (funcall separator-left face0 face1)
-				       (when (and (boundp 'erc-track-minor-mode) erc-track-minor-mode)
-					 (powerline-raw erc-modified-channels-object face1 'l))
-				       (powerline-major-mode face1 'l)
-				       (powerline-process face1)
-				       (powerline-minor-modes face1 'l)
-				       (powerline-narrow face1 'l)
-				       (powerline-raw " " face1)
-				       (funcall separator-left face1 face2)
-				       (powerline-vc face2 'r)
-				       (when (bound-and-true-p nyan-mode)
-					 (powerline-raw (list (nyan-create)) face2 'l))))
-			    (rhs (list (powerline-raw global-mode-string face2 'r)
-				       (funcall separator-right face2 face1)
-				       (unless window-system
-					 (powerline-raw (char-to-string #xe0a1) face1 'l))
-				       (funcall separator-right face1 face0)
-				       (powerline-raw " " face0)
-				       (powerline-raw "%6p" face0 'r)
-				       (when powerline-display-hud
-					 (powerline-hud face0 face2))
-				       (powerline-fill face0 0)
-				       )))
-		       (concat (powerline-render lhs)
-			       (powerline-fill face2 (powerline-width rhs))
-			       (powerline-render rhs)))))))
-  (powerline-default-theme-alt))
-
-(use-package popwin
-  :config
-  (setq popwin:popup-window-height 20)
-  (popwin-mode 1))
-;;try customizing display-buffer if having trouble
-
-(use-package volatile-highlights
-  :diminish volatile-highlights-mode
-  :config (volatile-highlights-mode))
-
-(use-package which-key
-  :diminish which-key-mode
-  :bind (:map help-map
-	      ("C-h" . which-key-C-h-dispatch))
-  :config
-  (setq which-key-sort-order 'which-key-key-order-alpha)
-  (which-key-mode))
-
-;; Major Mode
-(use-package compile
-  :defer 5
-  :config
-  (setq compilation-scroll-output 'first-error
-	compilation-ask-about-save nil
-	compilation-always-kill t))
-
-;; (use-package clojure-mode
-;;   :defer t)
-
-;; (use-package cider
-;;   :after clojure-mode
-;;   :config
-;;   (setq cider-use-overlays nil))
-
-(use-package cc-mode
-  :bind (:map c-mode-base-map
-	      ("C-c C-j" . compile) ;; Programming Competition
-	      ("C-c C-k" . eshell))
-  :config
-  ;; (add-hook 'c-mode-common-hook
-  ;; 	      (lambda ()
-  ;; 		(set (make-local-variable 'compile-command)
-  ;; 		     (concat (concat "make -k "
-  ;; 				     buffer-file-name) " build")))))
-  (c-toggle-auto-newline)
-  ;;nand2tetris
-  (add-to-list 'auto-mode-alist '("\\.hdl\\'"  . c-mode))
-  (add-to-list 'auto-mode-alist '("\\.jack\\'" . java-mode))
-  (add-to-list 'auto-mode-alist '("\\.over\\'" . json-mode))
-  )
-
-(use-package discover-my-major
-  :bind (:map help-map
-	      ("C-m" . discover-my-major) ;;view-order-manuals
-	      ("C-M-m" . discover-my-mode)))
-
-;; (use-package go-mode
-;;   :bind (("C-c C-a" . go-test-current-project)
-;;          ("C-c C-m" . go-test-current-file)
-;;          ("C-c ." . go-test-current-test)
-;;          ("C-c C-b" . go-run)
-;;          ("C-h C-f" . godoc-at-point))
-;;   (add-hook 'before-save-hook 'gofmt-before-save nil t)
-;;   (set (make-local-variable 'company-backends) '(company-go))
-;;   (go-eldoc-setup)
-;;   (use-package go-imports
-;;     (setq gofmt-command goimports)
-;;     ))
-
-(use-package dante
-  :after haskell-mode
-  :commands 'dante-mode
-  :init
-  ;;(add-hook 'haskell-mode-hook 'flycheck-mode)
-  (add-hook 'haskell-mode-hook 'dante-mode))
-
-(use-package haskell-mode
-  :after company
-  :bind (:map haskell-mode-map
-	      ("C-#" . haskell-process-reload)
-              ("C-c h" . haskell-hoogle)
-	      ("C-c C-," . haskell-navigate-imports)
-	      ("C-c C-." . haskell-mode-format-imports)
-	      ("C-c C-u" . my-haskell-insert-undefined))
-  :config
-  ;;distribution specific
-  (setq haskell-process-args-ghci
-	'("-ferror-spans" "-fshow-loaded-modules"))
-  (setq haskell-process-args-cabal-repl
-	'("--ghc-options=-ferror-spans -fshow-loaded-modules"))
-  (setq haskell-process-args-stack-ghci
-	'("--ghci-options=-ferror-spans -fshow-loaded-modules"
-	  "--no-build" "--no-load"))
-  (setq haskell-process-args-cabal-new-repl
-	'("--ghci-options=-ferror-spans -fshow-loaded-modules"))
-
-  (defun my-haskell-insert-undefined ()
-    (interactive) (insert "undefined"))
-  (setq haskell-process-log t
-        haskell-process-auto-import-loaded-modules t
-	haskell-process-suggest-remove-import-lines t
-	haskell-interactive-popup-errors nil
-	haskell-hoogle-command "hoogle")
-  (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
-  (add-hook 'haskell-mode-hook 'haskell-doc-mode)
-  (add-hook 'haskell-mode-hook 'haskell-decl-scan-mode)
-  (add-hook 'haskell-mode-hook 'haskell-auto-insert-module-template)
-  (add-hook 'haskell-mode-hook (lambda () (set (make-local-variable 'company-backends) (append '((company-capf company-dabbrev-code)) company-backends)))))
-
-(use-package js2-mode
-  :mode "\\.js\\'")
-
-(use-package markdown-mode
-  :defer t
-  :config
-  (setq markdown-command "pandoc"))
-
-(use-package semantic
-  :hook ((c-mode . semantic-mode)
-	 (c++-mode . semantic-mode)
-	 (semantic-mode . semantic-idle-summary-mode))
-  :config
-  (require 'semantic/bovine/gcc))
-
-(use-package srefactor
-  :after semantic)
-
-;; Plugout
-(use-package ediff
-  :config
-  (setq ediff-diff-options "-w"
-        ediff-split-window-function 'split-window-horizontally
-        ediff-window-setup-function 'ediff-setup-windows-plain))
-
-(use-package diff-hl
-  :bind (:map diff-hl-mode-map
-              ("C-c d" . diff-hl-revert-hunk)
-              ("C-<"   . diff-hl-previous-hunk)
-              ("C->"   . diff-hl-next-hunk))
-  :config
-  (global-diff-hl-mode)
-  (diff-hl-margin-mode)
-  (diff-hl-dired-mode)
-  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
-
-(use-package magit
-  :bind (("C-x g" . magit-status)
-         ("C-x M-g" . magit-dispatch-popup)
-	 :map magit-status-mode-map
-	 ("C-c f" . magit-format-patch))
-  :config
-  ;; (setq magit-display-buffer-function
-  ;;       #'magit-display-buffer-same-window-except-diff-v1)
-  (setq-default magit-diff-refine-hunk t))
-
-(use-package magit-org-todos
-  :config
-  (magit-org-todos-autoinsert))
-
-(use-package org
-  :init
-  ;; (defun org-done ()
-  ;;   "Change task status to DONE and archive it."
-  ;;   (interactive)
-  ;;   (org-todo 'done)
-  ;;   (org-archive-subtree))
-
-  ;; (defun org-refile-goto ()
-  ;;   "Use org-refile to conveniently choose and go to a heading."
-  ;;   (interactive)
-  ;;   (let ((current-prefix-arg '(4))) (call-interactively 'org-refile))
-  ;;   )
-
-  ;; try this snippet
-  (defvar org-capture-templates
-    '(("t" "My TODO task format." entry
-       (file+headline "todo.org" "Todo List")
-       "* TODO %?\nSCHEDULED: %t")
-      ("n" "My note format." entry
-       (file "notes.org")
-       "* %?")))
-  :hook (org-mode . org-indent-mode)
-  :bind (("C-c l" . org-store-link)
-         ("C-c a" . org-agenda)
-         ("C-c c" . org-capture)
-         ("C-c b" . org-switchb)
-         :map org-mode-map
-         ("C-S-n" . org-move-subtree-down)
-         ("C-S-p" . org-move-subtree-up)
-         ;; ("C-c t" . org-done)
-         ;; ("s-;" . org-refile-goto)
-         ("C-c j" . org-refile-goto-last-stored))
-  :config
-  (setq org-startup-folded nil
-	org-startup-with-inline-images t
-	org-startup-indented t
-	org-startup-with-latex-preview t)
-  (setq org-agenda-restore-windows-after-quit t
-        ;; org-agenda-window-setup 'only-window
-        ;; org-agenda-include-diary nil
-        ;; org-agenda-todo-ignore-scheduled t
-        ;; org-agenda-todo-ignore-deadlines t
-        )
-  (setq org-clock-persist t
-        org-clock-in-resume t
-        org-clock-into-drawer t
-        org-clock-out-remove-zero-time-clocks t)
-  (setq org-log-done 'time
-        org-log-reschedule 'time
-        ;; org-log-into-drawer t
-        org-special-ctrl-a 'reversed
-        org-catch-invisible-edits 'show
-        org-return-follows-link t
-        org-imenu-depth 3)
-  (setq org-src-fontify-natively t
-        org-src-preserve-indentation t
-        ;; org-src-tab-acts-natively t
-        ;; org-image-actual-width nil
-        )
-  (setq org-directory "~/org"
-        org-agenda-files '("~/org")
-        org-default-notes-file (expand-file-name "notes.org" org-directory))
-  (setq org-refile-targets '((nil :maxlevel . 5) (org-agenda-files :maxlevel . 5)))
-  (add-hook 'org-agenda-after-show-hook 'org-show-entry)
-  (setq org-refile-use-outline-path t)
-  ;; (setq org-outline-path-complete-in-steps nil)
-  (setq org-goto-interface 'outline-path-interface)
-  (org-clock-persistence-insinuate))
-
-
-(use-package org-pomodoro
-  :after org
-  :config
-  (setq org-pomodoro-keep-killed-pomodoro-time t))
-
-(use-package eshell-z :after eshell)
-(use-package eshell-up :after eshell)
-
-(defun eshell-new ()
-  "Open a new eshell buffer."
+(defun scheme-load-current-file ()
   (interactive)
-  (eshell t))
-
-(use-package pomidor
-  :bind ("C-c p" . pomidor))
-
-;; to organize
-;; (add-hook 'eshell-mode-hook (lambda () (define-key eshell-mode-map (kbd "<tab>") 'completion-at-point)))
-;; (global-set-key [f1] 'projectile-run-eshell)
-;; (setq magit-repo-dirs
-;;       (mapcar
-;;        (lambda (dir)
-;;          (substring dir 0 -1))
-;;        (cl-remove-if-not
-;;         (lambda (project)
-;;           (unless (file-remote-p project)
-;;             (file-directory-p (concat project "/.git/"))))
-;;         (projectile-relevant-known-projects))))))
-;; (use-package find-file-in-project
-;;   :commands find-file-in-project)
-;; :delight '(:eval (concat " " (projectile-project-name))))
-;; (setq auto-revert-verbose nil)
-;; :commands dired-jump)
-;;     :commands (org-projectile-location-for-project)
-;;     (setq org-projectile-projects-file org-projectile-file)
-;;     (push (org-projectile-project-todo-entry :empty-lines 1)
-;;           (org-projectile-per-project)
-;;           (setq org-projectile-per-project-filepath org-projectile-file))))
-;; (dired (projectile-project-root)))))
-;;   (setq projectile-mode-line '(:eval (format " Pro[%s]" (projectile-project-name)))
-;; (use-package projectile
-;;   (projectile-global-mode 1)
-;;   (setq projectile-enable-caching nil))
-;; :config
-;; (setq projectile-completion-system 'ivy))
-;; 	    :defer 1
-;; 	    :hook (prog-mode . projectile-mode)
-;; 	    :config
-;; 	    (setq projectile-completion-system 'helm)
-;; 	    )    :bind* ("C-c TAB" . projectile-find-other-file)
-;;   (projectile-global-mode 1)
-;;   (setq projectile-enable-caching nil))
-;; 	  :bind-keymap ("C-c p" . projectile-command-map)
-;; 	  (setq projectile-mode-line '(:eval
-;;                                        (if
-;; 					   (file-remote-p default-directory)
-;; 					   " Projectile"
-;; 					 (format " [%hs]"
-;; 						 (projectile-project-name)))))
-;; 	  ;; :hook (prog-mode . turn-on-diff-hl-mode)
-;; 	  (setq projectile-project-root-files-bottom-up
-;; 		'(".git" ".projectile"))
-;; 	  (setq projectile-completion-system 'ivy)
-;; 	  (setq projectile-indexing-method 'alien)
-;; 	  (setq projectile-enable-caching nil)
-;; 	  (setq projectile-switch-project-action
-;; 		(lambda ()
-;; 		  (dired (projectile-project-root)))))
-;; 	:hook (prog-mode . projectile-mode)
-;; 	:bind ("<f6>" . projectile-compile-project)
-
-;; Misc
-(setq custom-file "~/.emacs.d/custom.el")
-(load custom-file t)
-
-(defun emacs-welcome()
-  "Display Emacs welcome screen."
+  (scheme-load-file (buffer-file-name)))
+(defun kill-from-indentation ()
+  "kill back to indentation."
   (interactive)
-  (find-file "~/org/notes.org")
-  (split-window-right)
-  (find-file "~/org/todo.org")
-  (split-window-below)
-  (open-buffer-file)
-  (other-window 1)
+  (back-to-indentation)
+  (let ((kill-whole-line nil))
+    (kill-line))
+  )
+(defun sanityinc/isearch-exit-other-end ()
+  "Exit isearch, but at the other end of the search string.
+This is useful when followed by an immediate kill."
+  (interactive)
+  (isearch-exit)
+  (goto-char isearch-other-end))
+(defun quick-jump-backward ()
+  (interactive)
+  (if (and highlight-symbol-mode highlight-symbol)
+      (highlight-symbol-prev)
+    (if (eq major-mode 'org-mode)
+	(org-backward-heading-same-level)))
+  )
+(defun quick-jump-forward ()
+  (interactive)
+  (if (and highlight-symbol-mode highlight-symbol)
+      (highlight-symbol-next)
+    (if (eq major-mode 'org-mode)
+	(org-forward-heading-same-level)))
   )
 
-(emacs-welcome)
+
+;; Keybindings
+(require 'general)
+(general-def
+  ;; "C-j" C-<return>
+  ;; bindable keys
+  ;; C-x C-u C-x C-l C-M-/
+  ;; C-!     C-$     C-^     C-(     C-=     C-}     C-:     C-|     C-.     C-`
+  ;; C-#     C-%     C-&     C-)     C-{     C-;     C-"     C-,     C-?     C-~
+  ;; C-= C-, M-[ M-] c-` c-;
+
+  ;; "C-c j" 'avy-goto-char-timer
+  ;; "C-c C-;" 'ace-pinyin-dwim
+  ;; "s-s l" 'link-hint-open-link
+  ;; "C-r" 'kill-region
+  ;; "C-w" 'backward-kill-word
+
+  "C-;" 'avy-goto-word-or-subword-1
+  "C-c ;" 'avy-goto-char-timer
+  "C-c C-;" 'avy-goto-char-timer
+  "M-s s" 'avy-goto-line
+  "M-c" 'avy-zap-to-char-dwim
+
+  "C-0" #'delete-window
+  "C-1" #'delete-other-windows
+  "C-2" #'split-window-below-cycle
+  "C-3" #'split-window-right-cycle
+  "C-4" #'find-file-other-window
+  "C-5" #'make-frame-command
+
+  "C-x o" 'ace-window
+  "M-o" 'other-window
+  "C-x C-b" 'ibuffer-other-window
+  "C-x C-'" 'toggle-frame-fullscreen
+  "C-<tab>" 'iflipb-next-buffer
+  "C-S-<tab>" 'iflipb-previous-buffer
+
+  "M-p" 'quick-jump-backward
+  "M-n" 'quick-jump-forward
+
+  "C-c h" 'highlight-symbol
+  "C-c M-h" 'highlight-symbol-query-replace
+
+  "C-c C-o" 'occur
+  "M-l" 'move-to-window-line-top-bottom
+
+  "C-c C-i" 'indent-buffer
+  "C-M-k" 'kill-from-indentation
+  "M-k" 'kill-sexp
+  "C-d" 'delete-forward-char
+  "C-x j" 'join-line
+  "M-j" 'fill-line
+  "C-c s" 'cycle-spacing
+  [remap just-one-space] 'cycle-spacing
+  "M-_" 'align-to-string
+  "C-<return>" 'open-line-below
+  "C-o" 'open-line-and-indent
+  "C-c e" 'er/expand-region
+  "C-'" 'er/expand-region ;; also C-M-<SPC>
+  "M-w" 'easy-kill
+
+  "M-s r" 'query-replace
+  "M-s M-r" 'query-replace-regexp
+
+  "C-c M-/" 'hippie-expand
+
+  "C-x n d" 'narrow-dwim
+  "C-x n s" 'narrow-quotes
+  "M-s M-l" 'downcase-dwim
+  "M-s M-c" 'capitalize-dwim
+  "M-s M-c" 'upcase-dwim
+
+  "C-c C-e" 'edit-dot-emacs
+  ;; "C-c r" 'rename-file
+  "C-c n" 'nyan-at-time
+  "C-c C-n" 'nyan-at-quater-or-cancel
+
+  "C-S-c C-S-c" 'mc/edit-lines
+  "C-S-c C-a" 'mc/edit-beginnings-of-lines
+  "C-S-c C-e" 'mc/edit-ends-of-lines
+  "C-<" 'mc/mark-previous-like-this
+  "C->" 'mc/mark-next-like-this
+  "C-c C-<" 'mc/mark-all-like-this
+  "C-S-<mouse-1>" 'mc/add-cursor-on-click
+
+  "M-y" 'browse-kill-ring
+
+  "C-c l" 'org-store-link
+  "C-c a" 'org-agenda
+  "C-c c" 'org-capture
+  ;; "C-c b" 'org-switchb
+  ;; "s-;" 'org-refile-goto
+  ;; "C-c j" 'org-refile-goto-last-stored
+
+  ;; "C-y" 'yank-and-indent
+  "C-M-<backspace>" 'backward-kill-sexp
+
+  "C-x m" 'consult-mode-command
+  "C-c f" 'consult-focus-lines
+  "C-x r x" 'consult-register
+
+  "C-c b" 'consult-bookmark
+  ;; "C-x r b" 'consult-bookmark
+  "C-x b" 'consult-buffer
+  "C-x 4 b" 'consult-buffer-other-window
+  "C-x 5 b" 'consult-buffer-other-frame
+
+  [remap goto-line] 'consult-goto-line
+  "M-s m" 'consult-mark
+  "M-s k" 'consult-global-mark
+
+  "C-c o" 'consult-outline
+  "C-c i" 'consult-imenu
+  "M-s e" 'consult-error
+  "M-s g" 'consult-git-grep
+  "M-s f" 'consult-find
+  "M-s l" 'consult-line
+  "C-c C-s" 'consult-line
+  "M-s M-o" 'consult-multi-occur
+
+  "M-y" 'consult-yank-pop
+
+  "C-c r" 'region-history-other
+  "C-x g" 'magit-status
+  "C-c g" 'magit-dispatch
+
+  "C-c v" 'evil-mode)
+(setq help-delete nil)
+(when help-delete
+  (define-key key-translation-map [?\C-h] [?\C-?])
+  (define-key key-translation-map [?\s-h] [?\C-h])
+  (general-def
+    "M-h" 'backward-kill-word
+    "C-M-h" 'backward-kill-sexp
+    "C-s-h" 'mark-defun))
+(general-def help-map
+  "C-i" 'info-display-manual)
+(general-def dired-mode-map
+  "C-c C-l" 'dired-up-directory)
+(general-def isearch-mode-map
+  "<tab>" 'isearch-dabbrev-expand
+  "C-c C-o" 'isearch-occur
+  ;; "C-o" 'isearch-occur
+  ;; "C-n" 'isearch-repeat-forward
+  ;; "C-p" 'isearch-repeat-backward
+  "C-<return>" 'sanityinc/isearch-exit-other-end
+  "M-<" 'isearch-beginning-of-buffer
+  "M->" 'isearch-end-of-buffer)
+(general-def company-active-map
+  ;; [tab] 'company-complete
+  "C-d" 'company-complete-selection
+  "C-p" 'company-select-previous
+  "C-n" 'company-select-next
+  "C-s" 'company-filter-candidates
+  "C-M-s" 'company-search-candidates)
+(general-def company-search-map
+  "C-p" 'company-select-previous
+  "C-n" 'company-select-next)
+(general-def selectrum-minibuffer-map
+  "C-c C-o" 'embark-export
+  "C-c C-c" 'embark-act)
+(general-def diff-hl-mode-map
+  "C-c d" 'diff-hl-revert-hunk
+  "C-<" 'diff-hl-previous-hunk
+  "C->" 'diff-hl-next-hunk)
+(general-def paredit-mode-map
+  "M-s" nil
+  "C-c M-s" 'paredit-splice-sexp
+  "M-s M-s" 'paredit-splice-sexp
+  "C-c M-f" 'paredit-add-to-previous-list
+  "C-c M-b" 'paredit-add-to-next-list
+  "C-c M-p" 'paredit-join-with-previous-list
+  "C-c M-n" 'paredit-join-with-next-list)
+(general-def sml-mode-map
+  [remap mark-defun] 'sml-mark-function)
+(general-def scheme-mode-map
+  "C-c C-l" 'scheme-load-current-file)
+(general-def org-mode-map
+  "C-S-n" 'org-move-subtree-down
+  "C-S-p" 'org-move-subtree-up)
+(general-def haskell-mode-map
+  "C-c C-a" 'haskell-process-reload
+  "C-c C-c" 'haskell-compile
+  "C-c h" 'haskell-hoogle
+  "C-c C-." 'haskell-navigate-imports)
+(general-def 'c-mode-base-map
+  "C-c C-j" 'compile
+  "C-c C-k" 'eshell)
