@@ -9,11 +9,14 @@
 (add-hook 'focus-out-hook #'garbage-collect)
 (add-hook 'minibuffer-setup-hook (lambda () (setq gc-cons-threshold most-positive-fixnum)))
 (add-hook 'minibuffer-exit-hook (lambda () (setq gc-cons-threshold (* 64 1000 1000))))
-
 (setq frame-title-format "%f - %m")
 ;; (setq frame-title-format '((:eval (if (buffer-file-name)
 ;; (abbreviate-file-name (buffer-file-name)) "%b")) (:eval (if (buffer-modified-p) " •")) " - %m"))
 
+(when (eq system-type 'gnu/linux)
+  (add-to-list 'default-frame-alist '(font . "Dejavu Sans Mono-11"))
+  (setq package-native-compile t)
+  )
 (when (eq system-type 'darwin)
   (setq initial-frame-alist '((left . 1.0) (width . 100) (fullscreen . fullheight)))
   (add-to-list 'default-frame-alist '(font . "Monaco-13"))
@@ -26,7 +29,7 @@
 	;; insert-directory-program "gls"
 	frame-title-format nil
 	inhibit-splash-screen t))
-
+;; (set-face-attribute 'default nil :family "Dejavu Sans Mono" :height 110 :background "#1a1a1a")
 
 ;; Base
 (setq-default cursor-type 'bar
@@ -38,11 +41,11 @@
       kept-new-versions 5
       delete-old-versions t
       backup-by-copying-when-mismatch t)
-(setq initial-scratch-message nil
+(setq initial-scratch-message ";; use less shell, more emacs.\n"
       large-file-warning-threshold 50000000
       echo-keystrokes 0.5
-      bidi-inhibit-bpa t
       window-combination-resize t
+      minibuffer-follows-selected-frame nil
       ring-bell-function 'ignore)
 (setq kill-whole-line t
       ;; tab-always-indent 'complete
@@ -80,7 +83,10 @@
       dired-dwim-target t
       dired-auto-revert-buffer t
       dired-listing-switches "-lGhv --group-directories-first") ;; -laGh1v
-(add-hook 'dired-mode #'dired-omit-mode)
+(add-hook 'dired-mode-hook #'dired-omit-mode)
+(require 'dired-du)
+(setq dired-du-size-format t)
+;; (add-hook 'dired-mode-hook #'dired-du-mode)
 (require 'recentf)
 (add-to-list 'recentf-exclude (expand-file-name package-user-dir))
 (setq recentf-max-menu-items 30)
@@ -98,6 +104,8 @@
 ;; (add-hook 'text-mode-hook 'abbrev-mode)
 ;; (setq text-mode-hook '(turn-on-auto-fill text-mode-hook-identify))
 (add-hook 'ibuffer-hook #'ibuffer-auto-mode)
+
+;; (add-hook 'prog-mode-hook #'flymake-mode)
 (add-hook 'c-mode-common-hook (lambda () (c-toggle-auto-state)))
 
 (require 'isearch-dabbrev)
@@ -107,7 +115,7 @@
 (column-number-mode)
 (tool-bar-mode 0)
 ;; (display-time-mode)
-;; (scroll-bar-mode 0)
+(scroll-bar-mode 0)
 (size-indication-mode)
 
 (global-auto-revert-mode)
@@ -118,19 +126,18 @@
 
 (delete-selection-mode)
 (electric-pair-mode)
-(blink-cursor-mode -1)
+;; (blink-cursor-mode -1)
 (show-paren-mode)
 ;; (remove-hook 'post-self-insert-hook 'blink-paren-post-self-insert-function)
 
 
 ;; Packages
-;; (add-to-list 'completion-styles 'flex t)
+(add-to-list 'completion-styles 'flex t) ;; fast only when using gccemacs
 ;; (add-to-list 'completion-styles 'substring t)
 (require 'company)
-(setq company-idle-delay 0.2
+(setq company-idle-delay 0.1
       company-minimum-prefix-length 2
       company-selection-wrap-around t
-      company-tooltip-flip-when-above t
       company-tooltip-align-annotations t
       company-dabbrev-code-ignore-case t
       company-search-regexp-function 'company-search-flex-regexp
@@ -138,7 +145,9 @@
       company-global-modes '(not org-mode)
       )
 (global-company-mode)
-(push 'company-ghci company-backends)
+(add-hook 'haskell-mode-hook 'dante-mode)
+;; (flycheck-add-next-checker 'haskell-dante '(info . haskell-hlint)
+;; (push 'company-ghci company-backends)
 ;; (add-hook 'haskell-mode-hook (lambda () (set (make-local-variable 'company-backends) (append '((company-capf company-dabbrev-code)) company-backends))))
 
 (require 'selectrum)
@@ -164,17 +173,29 @@
       avy-timeout-seconds 0.35)
 (setq avy-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l ?e ?r ?u ?i))
 
+(require 'yasnippet)
+(setq yas-triggers-in-field t)
+(yas-global-mode)
+(advice-add 'company-complete-common :before
+	    (lambda () (setq my-company-point (point))))
+(advice-add 'company-complete-common :after
+	    (lambda () (when (equal my-company-point (point)) (yas-expand))))
+
 (require 'expand-region)
 
 (setq help-window-select t)
 (require 'shackle)
 (setq shackle-rules '((compilation-mode :select t)
 		      (occur-mode :select t)
-		      (help-mode :align 'below :size 0.3 :select t)))
+		      (help-mode :align 'below :size 0.3 :select t)
+		      (Man-mode :select t)
+		      ))
 (shackle-mode)
 (defun isearch-exit-why (&rest _)
   (isearch-exit))
 (advice-add 'isearch-occur :before 'isearch-exit-why)
+
+(require 'sudo-edit)
 
 ;; (global-hl-line-mode)
 (volatile-highlights-mode)
@@ -199,7 +220,6 @@
   )
 ;; (setq scheme-program-name "racket")
 
-;; (add-hook 'c-mode-common-hook (lambda () (c-toggle-auto-state)))
 ;; programming competition
 ;; (add-hook 'c-mode-common-hook
 ;;               (lambda ()
@@ -209,10 +229,16 @@
 ;;                      (concat (concat "make -k "
 ;; buffer-file-name) " build")))))
 ;; (c-toggle-auto-newline)
-
+(require 'eshell)
 (require 'eshell-z)
 (require 'eshell-syntax-highlighting)
+(require 'em-smart)
+(require 'esh-autosuggest)
+(setq eshell-where-to-jump 'begin)
+(setq eshell-review-quick-commands nil)
+(setq eshell-smart-space-goes-to-end t)
 (eshell-syntax-highlighting-global-mode)
+(add-hook 'eshell-mode-hook #'esh-autosuggest-mode)
 
 (defun my-inf-sml-mode-hook () "Local defaults for inferior SML mode"
        (add-hook 'comint-output-filter-functions 'comint-truncate-buffer)
@@ -232,6 +258,7 @@
 (add-hook 'haskell-mode-hook #'haskell-doc-mode)
 (add-hook 'haskell-mode-hook #'haskell-decl-scan-mode)
 (add-hook 'haskell-mode-hook #'haskell-auto-insert-module-template)
+(add-hook 'haskell-mode-hook (lambda () (setq indent-tabs-mode nil)))
 
 (setq org-startup-folded nil
       org-startup-with-inline-images t
@@ -254,7 +281,8 @@
       org-agenda-files '("~/org")
       org-default-notes-file (expand-file-name "notes.org" org-directory))
 
-;; (pdf-tools-install)
+(pdf-tools-install)
+(setq pdf-view-midnight-colors '("#c3c4c6" . "#001111"))
 
 (setq TeX-auto-save t
       TeX-parse-self t)
@@ -262,12 +290,16 @@
 (put 'narrow-to-region 'disabled nil)
 (put 'narrow-to-page   'disabled nil)
 
-(require 'diminish)
+(require 'delight)
+(delight '((eldoc-mode nil "eldoc")
+	   (hi-lock-mode nil "hi-lock")
+	   (highlight-symbol-mode nil "highlight-symbol")
+	   (yas-minor-mode nil "yasnippet")
+	   (volatile-highlights-mode nil "volatile-highlights")
+	   (subword-mode nil "subword")
+	   (whitespace-mode nil "whitespace")
+	   (dired-du-mode nil "Dired-du")))
 
-(diminish 'eldoc-mode)
-(diminish 'hi-lock-mode)
-(diminish 'volatile-highlights-mode)
-(diminish 'whitespace-mode)
 
 ;; (load-theme 'ample t)
 (nimbus-theme)
@@ -285,7 +317,6 @@
  ;; '(selectrum-secondary-highlight ((t (:background "#ad3632" :foreground "#c23122" :underline t))))
  ;; '(selectrum-current-candidate ((t (:weight bold :background "darkseagreen2"))))
  )
-;; (set-face-attribute 'default nil :family "Dejavu Sans Mono" :height 130 :background "#1a1a1a")
 
 
 ;; Functions
@@ -418,7 +449,7 @@
     (call-interactively #'iflipb-next-buffer)))
 (defvar nyan-prompt-timer nil)
 (defun nyan-at-time (time)
-  "Nyan after a given time."
+  "Nyan after set time."
   (interactive "sRun at time: ")
   (when (timerp nyan-prompt-timer)
     (cancel-timer nyan-prompt-timer))
@@ -442,11 +473,8 @@ another window."
   (interactive "r")
   (vc-region-history begin end)
   (other-window 1))
-(defun scheme-load-current-file ()
-  (interactive)
-  (scheme-load-file (buffer-file-name)))
 (defun kill-from-indentation ()
-  "kill back to indentation."
+  "Kill back to indentation."
   (interactive)
   (back-to-indentation)
   (let ((kill-whole-line nil))
@@ -506,7 +534,7 @@ This is useful when followed by an immediate kill."
   "C-x o" 'ace-window
   "M-o" 'other-window
   "C-x C-b" 'ibuffer-other-window
-  "C-x C-'" 'toggle-frame-fullscreen
+  ;; "C-x C-'" 'toggle-frame-fullscreen
   "C-<tab>" 'iflipb-next-buffer
   "C-S-<tab>" 'iflipb-previous-buffer
 
@@ -532,7 +560,7 @@ This is useful when followed by an immediate kill."
   "C-o" 'open-line-and-indent
   "C-c e" 'er/expand-region
   "C-'" 'er/expand-region ;; also C-M-<SPC>
-  "M-w" 'easy-kill
+  ;; "M-w" 'easy-kill
 
   "M-s r" 'query-replace
   "M-s M-r" 'query-replace-regexp
@@ -545,6 +573,7 @@ This is useful when followed by an immediate kill."
   "M-s M-c" 'capitalize-dwim
   "M-s M-c" 'upcase-dwim
 
+  "C-c C-r" 'sudo-edit
   "C-c C-e" 'edit-dot-emacs
   ;; "C-c r" 'rename-file
   "C-c n" 'nyan-at-time
@@ -588,11 +617,14 @@ This is useful when followed by an immediate kill."
   "C-c i" 'consult-imenu
   "M-s e" 'consult-error
   "M-s g" 'consult-git-grep
+  "M-s M-g" 'consult-grep
   "M-s f" 'consult-find
+  "C-c C-f" 'consult-find
   "M-s l" 'consult-line
   "C-c C-s" 'consult-line
   "M-s M-o" 'consult-multi-occur
 
+  "C-z" 'delete-frame
   "M-y" 'consult-yank-pop
 
   "C-c r" 'region-history-other
@@ -632,6 +664,7 @@ This is useful when followed by an immediate kill."
   "C-p" 'company-select-previous
   "C-n" 'company-select-next)
 (general-def selectrum-minibuffer-map
+  "C-<return>" 'selectrum-select-current-candidate
   "C-c C-o" 'embark-export
   "C-c C-c" 'embark-act)
 (general-def diff-hl-mode-map
@@ -649,15 +682,20 @@ This is useful when followed by an immediate kill."
 (general-def sml-mode-map
   [remap mark-defun] 'sml-mark-function)
 (general-def scheme-mode-map
-  "C-c C-l" 'scheme-load-current-file)
+  "C-c C-l" 'scheme-load-file)
 (general-def org-mode-map
   "C-S-n" 'org-move-subtree-down
   "C-S-p" 'org-move-subtree-up)
 (general-def haskell-mode-map
+  "C-c C-s" nil
+  "C-c M-s" 'haskell-mode-toggle-scc-at-point
   "C-c C-a" 'haskell-process-reload
   "C-c C-c" 'haskell-compile
   "C-c h" 'haskell-hoogle
   "C-c C-." 'haskell-navigate-imports)
-(general-def 'c-mode-base-map
+(general-def c-mode-base-map
   "C-c C-j" 'compile
   "C-c C-k" 'eshell)
+(general-def esh-autosuggest-active-map
+  "C-e" 'company-complete-selection
+  )
